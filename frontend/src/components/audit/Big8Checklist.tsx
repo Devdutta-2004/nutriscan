@@ -1,6 +1,7 @@
-import React from 'react';
-import { CheckCircle2, AlertTriangle, XCircle, ChevronRight, CornerDownRight } from 'lucide-react';
+import React, { useState } from 'react';
+import { CheckCircle2, AlertTriangle, XCircle, ChevronRight, ChevronDown, BookOpen, Search, Eye } from 'lucide-react';
 import { ChecklistItem, ComplianceStatus } from '../../types/compliance';
+import { getPlainEnglishSummary } from '../../utils/grading';
 
 interface Big8ChecklistProps {
   checklist: ChecklistItem[];
@@ -13,25 +14,37 @@ export const Big8Checklist: React.FC<Big8ChecklistProps> = ({
   selectedMandateId,
   onSelectMandate,
 }) => {
+  const [filter, setFilter] = useState<'ALL' | 'VIOLATION' | 'WARNING' | 'COMPLIANT'>('ALL');
+  const [expandedCitationId, setExpandedCitationId] = useState<string | null>(null);
+
+  const violationsCount = checklist.filter((c) => c.status === 'VIOLATION').length;
+  const warningsCount = checklist.filter((c) => c.status === 'WARNING').length;
+  const compliantCount = checklist.filter((c) => c.status === 'COMPLIANT').length;
+
+  const filteredItems = checklist.filter((item) => {
+    if (filter === 'ALL') return true;
+    return item.status === filter;
+  });
+
   const getStatusBadge = (status: ComplianceStatus) => {
     switch (status) {
       case 'COMPLIANT':
         return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-500/10 text-emerald-300 border border-emerald-500/25">
+          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-extrabold bg-emerald-100 text-emerald-800 border border-emerald-300">
             <CheckCircle2 className="w-3 h-3" />
             PASS
           </span>
         );
       case 'WARNING':
         return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-amber-500/10 text-amber-300 border border-amber-500/25">
+          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-extrabold bg-amber-100 text-amber-800 border border-amber-300">
             <AlertTriangle className="w-3 h-3" />
-            WARNING
+            ADVISORY
           </span>
         );
       case 'VIOLATION':
         return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-rose-500/10 text-rose-300 border border-rose-500/25 animate-pulse">
+          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-extrabold bg-rose-100 text-rose-800 border border-rose-300 animate-pulse">
             <XCircle className="w-3 h-3" />
             VIOLATION
           </span>
@@ -39,75 +52,189 @@ export const Big8Checklist: React.FC<Big8ChecklistProps> = ({
     }
   };
 
+  const toggleCitation = (e: React.MouseEvent, mandateId: string) => {
+    e.stopPropagation();
+    setExpandedCitationId((prev) => (prev === mandateId ? null : mandateId));
+  };
+
   return (
-    <div className="space-y-2">
-      <div className="flex items-center justify-between px-1 mb-2">
-        <h3 className="text-xs font-bold uppercase tracking-wider text-zinc-400 font-sans">
-          Big-8 Statutory Checklist
-        </h3>
-        <span className="text-[11px] font-mono text-zinc-400">
-          Click item to spotlight on packaging
-        </span>
+    <div className="space-y-4">
+      {/* Header & Filter Pills */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pb-2 border-b border-zinc-200">
+        <div>
+          <h3 className="text-sm font-black uppercase tracking-wider text-zinc-900">
+            Statutory Mandates Audit ({checklist.length})
+          </h3>
+          <p className="text-xs text-zinc-500">
+            Every mandatory declaration verified under the Legal Metrology (Packaged Commodities) Rules, 2011
+          </p>
+        </div>
+
+        {/* Filter Tabs */}
+        <div className="flex items-center gap-1.5 bg-zinc-100 p-1 rounded-xl text-xs font-bold shrink-0 self-start sm:self-auto">
+          <button
+            onClick={() => setFilter('ALL')}
+            className={`px-2.5 py-1 rounded-lg transition-all ${
+              filter === 'ALL' ? 'bg-white text-zinc-900 shadow-sm' : 'text-zinc-600 hover:text-zinc-900'
+            }`}
+          >
+            All ({checklist.length})
+          </button>
+          {violationsCount > 0 && (
+            <button
+              onClick={() => setFilter('VIOLATION')}
+              className={`px-2.5 py-1 rounded-lg transition-all ${
+                filter === 'VIOLATION'
+                  ? 'bg-rose-500 text-white shadow-sm'
+                  : 'text-rose-600 hover:bg-rose-50'
+              }`}
+            >
+              Violations ({violationsCount})
+            </button>
+          )}
+          {warningsCount > 0 && (
+            <button
+              onClick={() => setFilter('WARNING')}
+              className={`px-2.5 py-1 rounded-lg transition-all ${
+                filter === 'WARNING'
+                  ? 'bg-amber-500 text-white shadow-sm'
+                  : 'text-amber-700 hover:bg-amber-50'
+              }`}
+            >
+              Advisories ({warningsCount})
+            </button>
+          )}
+          <button
+            onClick={() => setFilter('COMPLIANT')}
+            className={`px-2.5 py-1 rounded-lg transition-all ${
+              filter === 'COMPLIANT'
+                ? 'bg-emerald-600 text-white shadow-sm'
+                : 'text-emerald-700 hover:bg-emerald-50'
+            }`}
+          >
+            Pass ({compliantCount})
+          </button>
+        </div>
       </div>
 
-      <div className="space-y-2 max-h-[380px] overflow-y-auto pr-1">
-        {checklist.map((item) => {
+      {/* Cards List */}
+      <div className="space-y-3">
+        {filteredItems.map((item) => {
           const isSelected = selectedMandateId === item.mandate_id;
+          const isCitationOpen = expandedCitationId === item.mandate_id;
           const isViolation = item.status === 'VIOLATION';
           const isWarning = item.status === 'WARNING';
+          const plainSummary = getPlainEnglishSummary(item);
 
           return (
             <div
               key={item.mandate_id}
               onClick={() => onSelectMandate(item.mandate_id)}
-              className={`cursor-pointer p-3 rounded-xl border transition-all duration-200 ${
+              className={`p-4 rounded-2xl border transition-all cursor-pointer ${
                 isSelected
-                  ? 'bg-zinc-800 border-emerald-500/50 shadow-[0_0_15px_rgba(16,185,129,0.15)] ring-1 ring-emerald-500/30'
-                  : 'bg-zinc-900/50 hover:bg-zinc-850 border-white/[0.06] hover:border-white/15'
+                  ? 'bg-white border-zinc-900 shadow-md ring-2 ring-zinc-900/10'
+                  : isViolation
+                  ? 'bg-rose-50/40 border-rose-200 hover:bg-rose-50/70'
+                  : isWarning
+                  ? 'bg-amber-50/40 border-amber-200 hover:bg-amber-50/70'
+                  : 'bg-white border-zinc-200 hover:border-zinc-300'
               }`}
             >
-              <div className="flex items-center justify-between gap-2">
-                <div className="flex items-center gap-2 min-w-0">
-                  <div
-                    className={`w-2 h-2 rounded-full shrink-0 ${
-                      isViolation
-                        ? 'bg-rose-500 animate-ping'
-                        : isWarning
-                        ? 'bg-amber-400'
-                        : 'bg-emerald-400'
-                    }`}
-                  />
-                  <div className="truncate">
-                    <p className="text-xs font-semibold text-zinc-100 truncate">{item.name}</p>
-                    <p className="text-[10px] font-mono text-zinc-400">{item.rule}</p>
+              {/* Card Header Row */}
+              <div className="flex items-start justify-between gap-3">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="font-extrabold text-sm text-zinc-900">{item.name}</span>
+                    <span className="px-2 py-0.5 rounded-md text-[10px] font-mono font-bold bg-zinc-100 text-zinc-600 border border-zinc-200">
+                      {item.rule}
+                    </span>
                   </div>
+
+                  {/* Plain English Finding */}
+                  <p className="text-xs text-zinc-700 leading-relaxed font-medium">
+                    {plainSummary}
+                  </p>
                 </div>
 
                 <div className="flex items-center gap-2 shrink-0">
                   {getStatusBadge(item.status)}
-                  <ChevronRight
-                    className={`w-4 h-4 text-zinc-500 transition-transform ${
-                      isSelected ? 'rotate-90 text-emerald-400' : ''
-                    }`}
-                  />
                 </div>
               </div>
 
-              {/* Collapsed / Expanded finding preview */}
-              <div className="mt-2 pt-2 border-t border-white/[0.04] text-[11px] flex items-start gap-1.5">
-                <CornerDownRight className="w-3 h-3 text-zinc-500 shrink-0 mt-0.5" />
-                <div className="text-zinc-300">
-                  <span className="text-zinc-400 font-medium mr-1">Declaration:</span>
-                  <span className="font-mono text-zinc-200">{item.extracted_text || 'None'}</span>
-                  <p
-                    className={`mt-0.5 ${
-                      isViolation ? 'text-rose-400' : isWarning ? 'text-amber-400' : 'text-zinc-400'
-                    }`}
+              {/* Extracted Value on Packaging */}
+              <div className="mt-3 pt-2.5 border-t border-zinc-100 flex flex-wrap items-center justify-between gap-2 text-xs">
+                <div className="flex items-center gap-1.5 text-zinc-500">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-zinc-400">
+                    Detected on Label:
+                  </span>
+                  <span className="px-2 py-0.5 rounded-lg bg-zinc-100 text-zinc-800 font-mono text-[11px] font-semibold truncate max-w-[280px]">
+                    {item.extracted_text || '[NOT FOUND ON PACKAGING]'}
+                  </span>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  {/* Spotlight on Label Button */}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onSelectMandate(item.mandate_id);
+                    }}
+                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-bold text-zinc-600 hover:text-zinc-950 bg-zinc-100 hover:bg-zinc-200 transition-colors"
                   >
-                    {item.reason}
-                  </p>
+                    <Eye className="w-3 h-3" />
+                    Spotlight
+                  </button>
+
+                  {/* Expand Gazette Law Button */}
+                  <button
+                    onClick={(e) => toggleCitation(e, item.mandate_id)}
+                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-bold text-indigo-700 hover:text-indigo-900 bg-indigo-50 hover:bg-indigo-100 transition-colors"
+                  >
+                    <BookOpen className="w-3 h-3" />
+                    <span>{isCitationOpen ? 'Hide Gazette Law' : 'View Gazette Law'}</span>
+                    {isCitationOpen ? (
+                      <ChevronDown className="w-3 h-3" />
+                    ) : (
+                      <ChevronRight className="w-3 h-3" />
+                    )}
+                  </button>
                 </div>
               </div>
+
+              {/* Collapsible Gazette Legal Citation Accordion */}
+              {isCitationOpen && item.gazette_citation && (
+                <div
+                  onClick={(e) => e.stopPropagation()}
+                  className="mt-3 p-3.5 bg-indigo-50/60 rounded-xl border border-indigo-100 text-xs text-zinc-700 space-y-2 animate-in fade-in duration-200"
+                >
+                  <div className="flex items-center justify-between text-[11px]">
+                    <span className="font-extrabold text-indigo-900">
+                      Official Gazette Citation: {item.gazette_citation.gazette_ref || 'LMPC Rules 2011'}
+                    </span>
+                    <span className="font-mono font-bold text-indigo-700 bg-indigo-100/80 px-2 py-0.5 rounded">
+                      {item.gazette_citation.rule || item.rule}
+                    </span>
+                  </div>
+
+                  <p className="text-[11px] text-zinc-800 italic bg-white p-2.5 rounded-lg border border-indigo-100/60 leading-relaxed font-serif">
+                    "{item.gazette_citation.verbatim_clause || item.gazette_citation.verbatim_text}"
+                  </p>
+
+                  {item.gazette_citation.officer_guidance && (
+                    <div className="text-[11px] text-zinc-600">
+                      <strong className="text-zinc-800">Officer Enforcement Directive: </strong>
+                      {item.gazette_citation.officer_guidance}
+                    </div>
+                  )}
+
+                  <div className="pt-1 border-t border-indigo-100 flex items-center justify-between text-[11px] font-semibold text-indigo-900">
+                    <span>Applicable Statutory Penalty:</span>
+                    <span className="font-bold text-rose-700">
+                      {item.gazette_citation.penalty_rule || 'Rule 32 (Fine up to ₹25,000)'}
+                    </span>
+                  </div>
+                </div>
+              )}
             </div>
           );
         })}
