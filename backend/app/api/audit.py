@@ -70,19 +70,39 @@ from app.rag.gemini_engine import gemini_engine
 
 @router.post("/upload")
 async def upload_and_audit(
-    file: UploadFile = File(...),
+    files: Optional[List[UploadFile]] = File(None),
+    file: Optional[UploadFile] = File(None),
     product_name: Optional[str] = Form("Scanned Packaging Specimen"),
     product_category: Optional[str] = Form("food"),
     label_data_json: Optional[str] = Form(None)
 ):
     """
-    Image upload endpoint for label compliance audit.
-    1. Multimodal Vision: Reads packaging text using Gemini 3.6 Flash Vision (handles curved, glossy, folded labels).
+    Multi-Image & Single-Image upload endpoint for label compliance audit.
+    Accepts 1 to 5 images representing different panels of the same physical product
+    (e.g., Front Display Panel, Back Information Panel, MRP top/bottom flap, Side Nutritional Box).
+    
+    1. Multi-Image Multimodal Vision: Reads declarations across all panels simultaneously.
     2. Deterministic Legal Engine: Synthesizes statutory compliance, checks Rule 6(11) USP paise math, PIN code, and Rule 32 penalties.
     """
-    # Read file content safely
-    contents = await file.read()
-    file_size_kb = round(len(contents) / 1024, 1)
+    # Collect all uploaded files
+    uploaded_files: List[UploadFile] = []
+    if files:
+        uploaded_files.extend(files)
+    if file and file not in uploaded_files:
+        uploaded_files.append(file)
+
+    if not uploaded_files:
+        raise HTTPException(status_code=400, detail="No image file provided for audit")
+
+    images_payload: List[tuple[bytes, str]] = []
+    total_size_kb = 0.0
+    primary_filename = uploaded_files[0].filename or "Specimen"
+
+    for f in uploaded_files:
+        contents = await f.read()
+        size_kb = round(len(contents) / 1024, 1)
+        total_size_kb += size_kb
+        images_payload.append((contents, f.content_type or "image/jpeg"))
 
     label_data = {}
     if label_data_json:
@@ -91,31 +111,36 @@ async def upload_and_audit(
         except json.JSONDecodeError:
             label_data = {}
 
-    # If Gemini Vision is available, run multimodal extraction on the raw photo bytes
-    if gemini_engine.is_available and len(contents) > 0:
-        mime_type = file.content_type or "image/jpeg"
-        vision_fields = await gemini_engine.extract_label_from_image(contents, mime_type=mime_type)
+    # If Gemini Vision is available, run multimodal extraction on ALL photos together
+    if gemini_engine.is_available and len(images_payload) > 0:
+        vision_fields = await gemini_engine.extract_label_from_images(images_payload)
         if vision_fields:
-            # Merge vision fields: vision data populates any missing/null fields
+            # Merge vision fields: populate any empty/null fields
             for k, v in vision_fields.items():
                 if v and (not label_data.get(k) or str(label_data.get(k)).strip().lower() in ["", "none", "missing", "n/a", "[not found]"]):
                     label_data[k] = v
 
     # Fallback to product_name or filename if generic name still missing
     if not label_data.get("generic_name"):
-        clean_name = (file.filename or product_name or "Custom Specimen").replace(".jpg", "").replace(".png", "").replace(".jpeg", "")
-        if not clean_name.startswith("IMG") and not clean_name.startswith("upload"):
+        clean_name = primary_filename.replace(".jpg", "").replace(".png", "").replace(".jpeg", "")
+        if not clean_name.startswith("IMG") and not clean_name.startswith("upload") and not clean_name.startswith("Camera"):
             label_data["generic_name"] = clean_name
 
     bounding_boxes = label_data.pop("bounding_boxes", [])
 
     report = await AuditSynthesizer.synthesize_report_with_llm(
-        product_name=label_data.get("generic_name") or file.filename or product_name,
+        product_name=label_data.get("generic_name") or primary_filename or product_name,
         label_data=label_data,
         tokens=bounding_boxes,
-        image_metadata={"filename": file.filename, "size_kb": file_size_kb, "format": file.content_type},
+        image_metadata={
+            "filename": primary_filename,
+            "panel_count": len(uploaded_files),
+            "size_kb": round(total_size_kb, 1),
+            "format": uploaded_files[0].content_type
+        },
         product_category=product_category or "food"
     )
     report["bounding_boxes"] = bounding_boxes
     report["is_live_upload"] = True
+    report["panel_count"] = len(uploaded_files)
     return report

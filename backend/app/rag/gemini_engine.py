@@ -341,12 +341,76 @@ Respond with valid JSON matching the schema below. If a field is not visible in 
             }
         }
 
+    async def extract_label_from_images(
+        self,
+        images: List[tuple[bytes, str]]
+    ) -> Optional[Dict[str, Any]]:
+        """
+        Multi-Image Multimodal Perception:
+        Accepts multiple photos of the SAME product (e.g. Front display panel + Back details + Side flap).
+        Sends all images together to Gemini Vision in a single multimodal turn so declarations scattered
+        across different panels (MRP on top/bottom, Net Qty on front, Consumer Care on back) are all synthesized.
+        """
+        if not self.is_available or not images:
+            return None
+
+        import base64
+
+        vision_prompt = """You are an OCR and Packaging Text Transcription System for Indian pre-packaged commodities.
+You are given MULTIPLE images/panels of the SAME physical product package (e.g., front panel, back information panel, side panel, top/bottom flap).
+
+Combine and transcribe all visible statutory declarations from ALL provided images into a single unified JSON:
+- generic_name: Common or generic commodity name (e.g., 'RATLAMI SEV', 'POTATO CHIPS'). NOT just the brand logo.
+- net_quantity: The declared net quantity or weight in standard metric SI units (e.g., '200 g', '100 ml', '1 N'). Do NOT use 'per 100g' from the nutrition table.
+- mrp: Maximum retail price (e.g., 'Rs. 55.00' or '₹55.00 (INCL. OF ALL TAXES)').
+- unit_sale_price: Unit sale price if printed (e.g., 'Rs. 0.28 per g' or '₹0.28 / g').
+- mfg_date: Date/month of packaging, manufacture, or import (e.g., '09/08/2026', 'AUG 2026').
+- expiry_date: Best before date, expiry date, or use-by period (e.g., 'Best Before 6 Months', '2027-01-05').
+- manufacturer_address: Complete name and address of manufacturer, packer, or marketer, including 6-digit postal PIN code.
+- importer_address: Complete name and address of registered Indian importer with PIN code (if imported product).
+- consumer_care_phone: Helpline or customer service phone/telephone number.
+- consumer_care_email: Official customer care email address.
+- country_of_origin: Declared country of origin/manufacture (e.g., 'India', 'Malaysia').
+- language_detected: Primary language of printed statutory declarations (e.g., 'English', 'Hindi').
+- mrp_values: List of all distinct MRP prices printed across any of the panels.
+
+Respond with valid JSON. If a declaration cannot be found on ANY of the provided images, return null for that field. Do not fabricate details."""
+
+        # Build parts array with prompt + all image objects
+        parts: List[Dict[str, Any]] = [{"text": vision_prompt}]
+        for idx, (img_bytes, mime_type) in enumerate(images, 1):
+            b64_data = base64.b64encode(img_bytes).decode("utf-8")
+            parts.append({
+                "inline_data": {
+                    "mime_type": mime_type or "image/jpeg",
+                    "data": b64_data
+                }
+            })
+
+        url = f"{self._base_url}/models/{self._model}:generateContent"
+        params = {"key": self._api_key}
+
+        payload = {
+            "contents": [
+                {
+                    "role": "user",
+                    "parts": parts
+                }
+            ],
+            "generationConfig": {
+                "temperature": 0.0,
+                "topP": 0.8,
+                "maxOutputTokens": 2048,
+                "responseMimeType": "application/json",
+            }
+        }
+
         try:
             if HAS_HTTPX:
                 async with httpx.AsyncClient(timeout=45.0) as client:
                     response = await client.post(url, params=params, json=payload)
                     if response.status_code != 200:
-                        logger.warning(f"Gemini Vision API returned {response.status_code}: {response.text[:200]}")
+                        logger.warning(f"Gemini Multi-Vision API returned {response.status_code}: {response.text[:200]}")
                         return None
                     data = response.json()
             else:
@@ -359,15 +423,15 @@ Respond with valid JSON matching the schema below. If a field is not visible in 
                 return None
 
             content = candidates[0].get("content", {})
-            parts = content.get("parts", [])
-            if not parts:
+            p_list = content.get("parts", [])
+            if not p_list:
                 return None
 
-            generated_text = parts[0].get("text", "")
+            generated_text = p_list[0].get("text", "")
             return json.loads(generated_text)
 
         except Exception as e:
-            logger.warning(f"Gemini Vision extraction failed: {e}")
+            logger.warning(f"Gemini Multi-Vision extraction failed: {e}")
             return None
 
 

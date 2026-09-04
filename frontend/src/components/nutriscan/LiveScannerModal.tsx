@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { X, Camera, Sparkles, RefreshCw, Zap, CheckCircle2, UploadCloud, Video, SwitchCamera } from 'lucide-react';
+import { X, Camera, Sparkles, RefreshCw, Zap, CheckCircle2, UploadCloud, Video, SwitchCamera, Plus, Trash2, Layers } from 'lucide-react';
 import { AuditReport } from '../../types/compliance';
 import { FairPackAPI } from '../../services/api';
 
@@ -22,6 +22,7 @@ export const LiveScannerModal: React.FC<LiveScannerModalProps> = ({
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analyzingStage, setAnalyzingStage] = useState('Position packaging inside frame');
   const [selectedPreset, setSelectedPreset] = useState<string>('compliant-biscuit');
+  const [capturedPanels, setCapturedPanels] = useState<{ file: File; url: string }[]>([]);
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -59,42 +60,75 @@ export const LiveScannerModal: React.FC<LiveScannerModalProps> = ({
 
   if (!isOpen) return null;
 
+  const snapCurrentFrame = (): Promise<File | null> => {
+    return new Promise((resolve) => {
+      if (!videoRef.current) return resolve(null);
+      const video = videoRef.current;
+      const canvas = document.createElement('canvas');
+      canvas.width = video.videoWidth || 640;
+      canvas.height = video.videoHeight || 480;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return resolve(null);
+
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      canvas.toBlob((blob) => {
+        if (!blob) return resolve(null);
+        const panelNumber = capturedPanels.length + 1;
+        const file = new File([blob], `Panel_${panelNumber}_Camera_${Date.now()}.jpg`, { type: 'image/jpeg' });
+        resolve(file);
+      }, 'image/jpeg', 0.92);
+    });
+  };
+
+  const handleAddCameraPanel = async () => {
+    const file = await snapCurrentFrame();
+    if (!file) return;
+    const url = URL.createObjectURL(file);
+    setCapturedPanels((prev) => [...prev, { file, url }]);
+  };
+
+  const handleRemovePanel = (index: number) => {
+    setCapturedPanels((prev) => {
+      URL.revokeObjectURL(prev[index].url);
+      return prev.filter((_, i) => i !== index);
+    });
+  };
+
+  const handleAuditAllPanels = async (explicitFiles?: File[]) => {
+    const filesToAudit = explicitFiles || capturedPanels.map((p) => p.file);
+    if (filesToAudit.length === 0) return;
+
+    setIsAnalyzing(true);
+    setAnalyzingStage(`Auditing ${filesToAudit.length} packaging panel(s)...`);
+
+    try {
+      const report = await FairPackAPI.uploadImageAndAudit(filesToAudit, (stage) => {
+        setAnalyzingStage(stage);
+      });
+
+      setIsAnalyzing(false);
+      if (onAuditComplete) {
+        onAuditComplete(report);
+      } else {
+        onFileUpload(filesToAudit[0]);
+      }
+      onClose();
+    } catch (err) {
+      console.error('Camera OCR failed:', err);
+      setIsAnalyzing(false);
+    }
+  };
+
   // Real Camera Snapshot & Live OCR
   const handleCaptureRealCamera = async () => {
-    if (!videoRef.current) return;
-    const video = videoRef.current;
+    if (capturedPanels.length > 0) {
+      await handleAuditAllPanels();
+      return;
+    }
 
-    const canvas = document.createElement('canvas');
-    canvas.width = video.videoWidth || 640;
-    canvas.height = video.videoHeight || 480;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-    canvas.toBlob(async (blob) => {
-      if (!blob) return;
-      const file = new File([blob], `Camera_Capture_${Date.now()}.jpg`, { type: 'image/jpeg' });
-
-      setIsAnalyzing(true);
-      setAnalyzingStage('Running OCR on camera capture...');
-
-      try {
-        const report = await FairPackAPI.uploadImageAndAudit(file, (stage) => {
-          setAnalyzingStage(stage);
-        });
-
-        setIsAnalyzing(false);
-        if (onAuditComplete) {
-          onAuditComplete(report);
-        } else {
-          onFileUpload(file);
-        }
-        onClose();
-      } catch (err) {
-        console.error('Camera OCR failed:', err);
-        setIsAnalyzing(false);
-      }
-    }, 'image/jpeg', 0.92);
+    const file = await snapCurrentFrame();
+    if (!file) return;
+    await handleAuditAllPanels([file]);
   };
 
   const handleSimulateScan = (presetId: string) => {
@@ -226,15 +260,85 @@ export const LiveScannerModal: React.FC<LiveScannerModalProps> = ({
         {/* Action Controls Footer */}
         <div className="p-4 sm:p-5 bg-zinc-900/80 border-t border-white/10 space-y-3">
           {useRealCamera ? (
-            /* Real Camera Capture Button */
-            <button
-              onClick={handleCaptureRealCamera}
-              disabled={isAnalyzing}
-              className="w-full py-3.5 rounded-2xl bg-[#D5FF3F] hover:bg-[#cbf432] text-zinc-950 font-black text-sm transition-all active:scale-[0.98] flex items-center justify-center gap-2 shadow-lg disabled:opacity-50"
-            >
-              <Camera className="w-5 h-5 stroke-[2.5]" />
-              <span>Capture Label &amp; Run OCR Audit</span>
-            </button>
+            /* Real Camera Multi-Panel Capture Controls */
+            <div className="space-y-3">
+              {/* Captured Panels Tray */}
+              {capturedPanels.length > 0 && (
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between text-[11px] font-bold text-zinc-300">
+                    <span className="flex items-center gap-1.5">
+                      <Layers className="w-3.5 h-3.5 text-[#D5FF3F]" />
+                      Captured Panels ({capturedPanels.length})
+                    </span>
+                    <span className="text-[10px] text-zinc-400 font-mono">Snap front + back/crimp</span>
+                  </div>
+
+                  <div className="flex items-center gap-2 overflow-x-auto pb-1 pt-0.5">
+                    {capturedPanels.map((panel, idx) => (
+                      <div
+                        key={idx}
+                        className="group relative shrink-0 w-16 h-16 rounded-xl overflow-hidden border border-[#D5FF3F]/60 bg-black shadow-md"
+                      >
+                        <img
+                          src={panel.url}
+                          alt={`Panel ${idx + 1}`}
+                          className="w-full h-full object-cover"
+                        />
+                        <span className="absolute bottom-0 inset-x-0 bg-black/85 text-[9px] font-bold text-center text-[#D5FF3F] py-0.5">
+                          {idx === 0 ? 'P1: Front' : idx === 1 ? 'P2: Back' : `P${idx + 1}`}
+                        </span>
+
+                        {!isAnalyzing && (
+                          <button
+                            type="button"
+                            onClick={() => handleRemovePanel(idx)}
+                            className="absolute top-1 right-1 w-4 h-4 rounded-full bg-rose-600 hover:bg-rose-700 text-white flex items-center justify-center text-[10px] shadow"
+                            title="Remove panel"
+                          >
+                            ×
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Action Buttons */}
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={handleAddCameraPanel}
+                  disabled={isAnalyzing}
+                  className="px-3.5 py-3 rounded-2xl bg-zinc-800 hover:bg-zinc-700 text-white font-bold text-xs sm:text-sm transition-all flex items-center gap-1.5 border border-white/15 shrink-0"
+                >
+                  <Plus className="w-4 h-4 text-[#D5FF3F]" />
+                  <span>+ Snap {capturedPanels.length === 0 ? 'Panel' : 'Another Panel'}</span>
+                </button>
+
+                <button
+                  onClick={handleCaptureRealCamera}
+                  disabled={isAnalyzing}
+                  className="flex-1 py-3 rounded-2xl bg-[#D5FF3F] hover:bg-[#cbf432] text-zinc-950 font-black text-xs sm:text-sm transition-all active:scale-[0.98] flex items-center justify-center gap-2 shadow-lg disabled:opacity-50"
+                >
+                  {isAnalyzing ? (
+                    <>
+                      <RefreshCw className="w-4 h-4 animate-spin text-zinc-950" />
+                      <span>Running Audit...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Camera className="w-4 h-4 stroke-[2.5]" />
+                      <span>
+                        {capturedPanels.length > 0
+                          ? `Audit All ${capturedPanels.length} Panels`
+                          : 'Snap & Run Instant Audit'}
+                      </span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
           ) : (
             /* Synthetic Scan Mode with Presets */
             <div>

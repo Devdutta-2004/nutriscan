@@ -77,6 +77,8 @@ export interface AuditReport {
   warnings: ChecklistItem[];
   bounding_boxes: BoundingBox[];
   image_url?: string;
+  additional_image_urls?: string[];
+  panel_count?: number;
   preset_id?: string;
   label_data?: any;
   is_live_upload?: boolean;

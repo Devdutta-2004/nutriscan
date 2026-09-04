@@ -54,18 +54,23 @@ export class FairPackAPI {
    * 3. Runs deterministic mathematical audit on extracted MRP, Net Qty & USP.
    */
   static async uploadImageAndAudit(
-    file: File,
+    fileOrFiles: File | File[],
     onProgress?: (stage: string, percent: number) => void
   ): Promise<AuditReport> {
-    const previewUrl = URL.createObjectURL(file);
+    const files = Array.isArray(fileOrFiles) ? fileOrFiles : [fileOrFiles];
+    const primaryFile = files[0];
+    const previewUrl = URL.createObjectURL(primaryFile);
 
     try {
-      // 1. Try sending the full image directly to the backend multimodal vision pipeline
-      onProgress?.('Sending image to Gemini Vision & Statutory RAG...', 25);
+      // 1. Send all image files to backend multimodal vision pipeline
+      const panelLabel = files.length > 1 ? ` (${files.length} panels)` : '';
+      onProgress?.(`Sending ${files.length} panel image(s) to Gemini Vision & Statutory RAG...`, 25);
       try {
         const formData = new FormData();
-        formData.append('file', file);
-        formData.append('product_name', file.name.replace(/\.[^/.]+$/, ''));
+        for (const f of files) {
+          formData.append('files', f);
+        }
+        formData.append('product_name', primaryFile.name.replace(/\.[^/.]+$/, '') + panelLabel);
         formData.append('product_category', 'food');
 
         const uploadRes = await fetch(`${API_BASE}/audit/upload`, {
@@ -76,16 +81,17 @@ export class FairPackAPI {
         if (uploadRes.ok) {
           const report = await uploadRes.json();
           report.image_url = previewUrl;
+          report.additional_image_urls = files.slice(1).map((f) => URL.createObjectURL(f));
           onProgress?.('Audit complete!', 100);
           return report;
         }
       } catch (uploadErr) {
-        console.warn('Backend upload failed, falling back to local OCR:', uploadErr);
+        console.warn('Backend multi-image upload failed, falling back to local OCR:', uploadErr);
       }
 
-      // 2. Client-side OCR fallback if backend is unreachable
+      // 2. Client-side OCR fallback on primary image if backend is unreachable
       onProgress?.('Initializing client-side OCR fallback...', 40);
-      const ocrResult: RealOCRResult = await ClientOCREngine.scanImage(file, onProgress);
+      const ocrResult: RealOCRResult = await ClientOCREngine.scanImage(primaryFile, onProgress);
 
       // Try /api/audit/run with client extracted tokens
       try {
@@ -93,7 +99,7 @@ export class FairPackAPI {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            product_name: ocrResult.fields.generic_name || file.name.replace(/\.[^/.]+$/, ''),
+            product_name: ocrResult.fields.generic_name || primaryFile.name.replace(/\.[^/.]+$/, ''),
             label_data: ocrResult.fields,
             bounding_boxes: ocrResult.boundingBoxes,
           }),
@@ -113,7 +119,7 @@ export class FairPackAPI {
       const clientReport = this.synthesizeClientReport(
         undefined,
         ocrResult.fields,
-        ocrResult.fields.generic_name || file.name.replace(/\.[^/.]+$/, ''),
+        ocrResult.fields.generic_name || primaryFile.name.replace(/\.[^/.]+$/, ''),
         ocrResult.boundingBoxes,
         true
       );
@@ -123,7 +129,7 @@ export class FairPackAPI {
       return clientReport;
     } catch (err) {
       console.warn('OCR error, falling back to heuristic parsing:', err);
-      return this.synthesizeClientReport(undefined, undefined, file.name, undefined, true);
+      return this.synthesizeClientReport(undefined, undefined, primaryFile.name, undefined, true);
     }
   }
 

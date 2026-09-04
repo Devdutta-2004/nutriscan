@@ -28,6 +28,7 @@ export const InspectionDrawer: React.FC<InspectionDrawerProps> = ({
   const [activeBoxId, setActiveBoxId] = useState<string | null>(null);
   const [selectedMandateId, setSelectedMandateId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'overview' | 'analytics' | 'checklist' | 'label' | 'notice'>('overview');
+  const [selectedPanelIndex, setSelectedPanelIndex] = useState<number>(0);
 
   if (!isOpen || !report) return null;
 
@@ -352,8 +353,35 @@ export const InspectionDrawer: React.FC<InspectionDrawerProps> = ({
                   )}
                 </div>
 
+                {/* Multi-Panel Image Switcher */}
+                {report.additional_image_urls && report.additional_image_urls.length > 0 && (
+                  <div className="flex items-center gap-2 mb-3 pb-2.5 border-b border-zinc-100 overflow-x-auto">
+                    <span className="text-[11px] font-bold text-zinc-400 shrink-0">
+                      Panels ({1 + report.additional_image_urls.length}):
+                    </span>
+                    {[report.image_url || '/presets/compliant_biscuit.svg', ...report.additional_image_urls].map((_, idx) => (
+                      <button
+                        key={idx}
+                        type="button"
+                        onClick={() => setSelectedPanelIndex(idx)}
+                        className={`px-3 py-1 rounded-xl text-xs font-bold transition-all ${
+                          selectedPanelIndex === idx
+                            ? 'bg-[#0E1118] text-[#D5FF3F] shadow-sm'
+                            : 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200'
+                        }`}
+                      >
+                        {idx === 0 ? 'Panel 1 (Front)' : idx === 1 ? 'Panel 2 (Back)' : `Panel ${idx + 1}`}
+                      </button>
+                    ))}
+                  </div>
+                )}
+
                 <CanvasViewer
-                  imageUrl={report.image_url || '/presets/compliant_biscuit.svg'}
+                  imageUrl={
+                    [report.image_url || '/presets/compliant_biscuit.svg', ...(report.additional_image_urls || [])][
+                      selectedPanelIndex
+                    ] || report.image_url || '/presets/compliant_biscuit.svg'
+                  }
                   boundingBoxes={report.bounding_boxes}
                   activeBoxId={activeBoxId}
                   onSelectBox={setActiveBoxId}
