@@ -10,6 +10,7 @@ import { RecentlyScanned, ScannedItem, RECENT_ITEMS } from './components/nutrisc
 import { BottomNav } from './components/nutriscan/BottomNav';
 import { LiveScannerModal } from './components/nutriscan/LiveScannerModal';
 import { UploadProductModal } from './components/nutriscan/UploadProductModal';
+import { FullPageReport } from './components/nutriscan/FullPageReport';
 import { InspectionDrawer } from './components/nutriscan/InspectionDrawer';
 import { InsightsView } from './components/nutriscan/InsightsView';
 import { CategoryView } from './components/nutriscan/CategoryView';
@@ -289,16 +290,18 @@ export function App() {
         onAuditComplete={handleAuditComplete}
       />
 
-      {/* Inspection Drawer / Bottom Sheet */}
-      <InspectionDrawer
-        isOpen={isDrawerOpen}
-        onClose={() => setIsDrawerOpen(false)}
-        report={report}
-        onOpenNotice={() => {
-          setIsDrawerOpen(false);
-          setIsNoticeOpen(true);
-        }}
-      />
+      {/* Full-Page Statutory Compliance Inspection Dashboard */}
+      {isDrawerOpen && (
+        <FullPageReport
+          report={report}
+          onClose={() => setIsDrawerOpen(false)}
+          onOpenNotice={() => setIsNoticeOpen(true)}
+          onRescan={() => {
+            setIsDrawerOpen(false);
+            setIsScannerOpen(true);
+          }}
+        />
+      )}
 
       {/* Official Notice of Non-Compliance (Rule 32) Modal */}
       <NoticeModal

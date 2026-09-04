@@ -8,6 +8,7 @@ export interface ExtractedLabelFields {
   unit_sale_price?: string;
   mfg_date?: string;
   manufacturer_address?: string;
+  importer_address?: string;
   consumer_care_phone?: string;
   consumer_care_email?: string;
   country_of_origin?: string;
@@ -65,37 +66,104 @@ export class ClientOCREngine {
       raw_text: text,
     };
 
-    const cleanLines = lines.map((l) => (l.text || '').trim()).filter(Boolean);
+    const cleanLines = lines
+      .map((l) => (l.text || '').trim())
+      .filter((l) => l.length > 1);
 
-    // 1. Generic Name
-    // Usually the largest or first strong header line not containing numbers
-    for (const line of cleanLines.slice(0, 5)) {
-      if (
-        line.length > 4 &&
-        !line.toLowerCase().includes('mrp') &&
-        !line.toLowerCase().includes('net') &&
-        !line.toLowerCase().includes('exp')
-      ) {
-        fields.generic_name = line;
+    const isNutritionLine = (line: string): boolean => {
+      const lower = line.toLowerCase();
+      return (
+        lower.includes('nutrition') ||
+        lower.includes('serving') ||
+        lower.includes('per 100') ||
+        lower.includes('energy') ||
+        lower.includes('kcal') ||
+        lower.includes('fat') ||
+        lower.includes('carbohydrate') ||
+        lower.includes('sugar') ||
+        lower.includes('protein') ||
+        lower.includes('sodium') ||
+        lower.includes('cholesterol') ||
+        lower.includes('% rda') ||
+        lower.includes('dietary allowance')
+      );
+    };
+
+    // 1. Generic Name of Commodity
+    // Look for explicit product identity keywords first
+    const COMMODITY_PATTERNS = [
+      /potato\s*crisps/i,
+      /potato\s*chips/i,
+      /corn\s*flakes/i,
+      /wheat\s*crackers/i,
+      /glucose\s*biscuits/i,
+      /biscuits/i,
+      /cookies/i,
+      /ready\s*to\s*eat\s*savouries/i,
+      /crisps/i,
+      /chips/i,
+      /dark\s*chocolate/i,
+      /chocolate/i,
+      /toned\s*milk/i,
+      /pasteurized\s*milk/i,
+      /instant\s*noodles/i,
+      /green\s*tea/i,
+      /face\s*cream/i,
+      /skin\s*cream/i,
+      /beverage/i,
+      /proprietary\s*food/i,
+    ];
+
+    for (const pattern of COMMODITY_PATTERNS) {
+      const match = text.match(pattern);
+      if (match) {
+        fields.generic_name = match[0].toUpperCase();
         break;
       }
     }
-    if (!fields.generic_name && cleanLines.length > 0) {
-      fields.generic_name = cleanLines[0];
+
+    if (!fields.generic_name) {
+      // Look for a prominent non-nutrition, non-legal line
+      for (const line of cleanLines) {
+        if (
+          !isNutritionLine(line) &&
+          !/^(mrp|net|exp|mfd|lot|batch|lic|pkg|fssai|number|phone|email|store|country)/i.test(line) &&
+          line.length > 3 &&
+          line.length < 50
+        ) {
+          fields.generic_name = line;
+          break;
+        }
+      }
     }
 
-    // 2. Net Quantity (e.g. 400g, 500 ml, 1 kg, Net Wt: 250 g)
-    const netMatch = text.match(
-      /(?:net\s*(?:weight|wt|quantity|qty|volume)?\s*[:\.\-]?\s*)?(\d+(?:\.\d+)?\s*(?:g|gm|gms|gram|grams|kg|kgs|ml|l|ltr|litre|pieces|pcs))\b/i
+    // 2. Net Quantity (Must NOT match "Per 100g" from nutrition tables)
+    // Priority: Explicit Net Wt / Net Quantity
+    const explicitNetMatch = text.match(
+      /(?:net\s*(?:weight|wt\.?|quantity|qty\.?|volume|content)?\s*[:\.\-]?\s*)(\d+(?:\.\d+)?\s*(?:g|gm|gms|gram|grams|kg|kgs|ml|l|ltr|litre|pieces|pcs|n))\b/i
     );
-    if (netMatch) {
-      fields.net_quantity = netMatch[1].trim();
+
+    if (explicitNetMatch && !/per\s*100\s*g/i.test(explicitNetMatch[0])) {
+      fields.net_quantity = explicitNetMatch[1].trim();
+    } else {
+      // Look for standalone weight line outside nutrition table
+      for (const line of cleanLines) {
+        if (!isNutritionLine(line)) {
+          const m = line.match(/\b(\d+(?:\.\d+)?\s*(?:g|gm|gms|kg|ml|l|ltr))\b/i);
+          if (m && !/per\s*serve/i.test(line) && !/size/i.test(line)) {
+            fields.net_quantity = m[1].trim();
+            break;
+          }
+        }
+      }
     }
 
-    // 3. MRP (e.g. MRP Rs. 80, ₹ 120.00, incl. of all taxes)
+    // 3. Maximum Retail Price (MRP)
+    // Requires explicit MRP / Retail Price keyword or currency symbol (never table decimals)
     const mrpMatch = text.match(
-      /(?:m\.?r\.?p\.?|max(?:imum)?\s*retail\s*price)\s*(?:rs\.?|inr|₹)?\s*(\d+(?:\.\d+)?)(.*)/i
+      /(?:m\.?r\.?p\.?|max(?:imum)?\s*retail\s*price)\s*[:\.\-]?\s*(?:rs\.?|inr|₹)?\s*(\d+(?:\.\d+)?)(.*)/i
     );
+
     if (mrpMatch) {
       const priceVal = mrpMatch[1];
       const restOfLine = (mrpMatch[2] || '').toLowerCase();
@@ -107,14 +175,19 @@ export class ClientOCREngine {
 
       fields.mrp = `₹${priceVal}${hasTax ? ' (incl. of all taxes)' : ''}`;
     } else {
-      // Fallback simple ₹ price search
-      const simplePrice = text.match(/(?:rs\.?|₹)\s*(\d+(?:\.\d+)?)/i);
-      if (simplePrice) {
-        fields.mrp = `₹${simplePrice[1]}`;
+      // Only match currency symbol if NOT on a nutrition line
+      for (const line of cleanLines) {
+        if (!isNutritionLine(line)) {
+          const symMatch = line.match(/(?:rs\.?|₹)\s*(\d+(?:\.\d+)?)/i);
+          if (symMatch) {
+            fields.mrp = `₹${symMatch[1]}`;
+            break;
+          }
+        }
       }
     }
 
-    // 4. Unit Sale Price (USP) (e.g. USP: ₹0.20/g, Rs 2.50 per 100g, 1.20 / ml)
+    // 4. Unit Sale Price (USP)
     const uspMatch = text.match(
       /(?:u\.?s\.?p\.?|unit\s*sale\s*price)\s*[:\.\-]?\s*(?:rs\.?|inr|₹)?\s*(\d+(?:\.\d+)?)\s*(?:\/|per)?\s*(g|100g|kg|ml|100ml|l|pcs)?/i
     );
@@ -124,16 +197,21 @@ export class ClientOCREngine {
 
     // 5. Date of Packaging / Manufacture / Expiry
     const dateMatch = text.match(
-      /(?:mfd|pkg|pkd|mfg|packed|manufactured|best\s*before|use\s*by)\s*[:\.\-]?\s*([a-z]{3}\/?\d{2,4}|\d{1,2}[\/\-\.]\d{2,4})/i
+      /(?:mfd|pkg|pkd|mfg|packed|manufactured|best\s*before|use\s*by|expiry|exp)\s*[:\.\-]?\s*([a-z]{3}\/?\d{2,4}|\d{1,2}[\/\-\.]\d{2,4})/i
     );
     if (dateMatch) {
       fields.mfg_date = dateMatch[1].trim();
     }
 
     // 6. Consumer Care Phone & Email
-    const phoneMatch = text.match(/(?:care|call|help|tel|phone|contact)?\s*[:\.\-]?\s*(\+?91[\-\s]?)?([1][8][0][0][\-\s]?\d{3}[\-\s]?\d{4}|\d{10}|\d{3,5}[\-\s]\d{6,8})/i);
+    const phoneMatch = text.match(
+      /(?:care|call|help|tel|phone|contact)?\s*[:\.\-]?\s*(\+?91[\-\s]?)?([1][8][0][0][\-\s]?\d{3}[\-\s]?\d{4}|\d{10}|\d{3,5}[\-\s]\d{6,8})/i
+    );
     if (phoneMatch) {
-      fields.consumer_care_phone = phoneMatch[0].replace(/[^0-9\+\-]/g, '').trim();
+      const cleanPhone = phoneMatch[0].replace(/[^0-9\+\-]/g, '').trim();
+      if (cleanPhone.length >= 8) {
+        fields.consumer_care_phone = cleanPhone;
+      }
     }
 
     const emailMatch = text.match(/([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/i);
@@ -141,22 +219,30 @@ export class ClientOCREngine {
       fields.consumer_care_email = emailMatch[1].trim();
     }
 
-    // 7. Manufacturer Address
-    const addressMatch = text.match(
-      /(?:mfd\s*by|manufactured\s*by|marketed\s*by|packed\s*by)\s*[:\.\-]?\s*([^\n\r]+(?:,\s*[^\n\r]+){1,3})/i
+    // 7. Manufacturer & Importer Address (Multi-line search)
+    const mfgMatch = text.match(
+      /(?:manufactured\s*(?:and\s*packed)?\s*by|mfd\s*by)\s*[:\.\-]?\s*([^\n\r]+(?:[\n\r][^\n\r]+){0,4})/i
     );
-    if (addressMatch) {
-      fields.manufacturer_address = addressMatch[1].trim();
+    if (mfgMatch) {
+      fields.manufacturer_address = mfgMatch[1].replace(/[\n\r]+/g, ', ').trim();
     }
 
-    // 8. Country of Origin
-    if (/made\s*in\s*india|country\s*of\s*origin\s*:\s*india/i.test(text)) {
+    const impMatch = text.match(
+      /(?:imported\s*(?:and\s*marketed)?\s*by|marketed\s*by)\s*[:\.\-]?\s*([^\n\r]+(?:[\n\r][^\n\r]+){0,4})/i
+    );
+    if (impMatch) {
+      fields.importer_address = impMatch[1].replace(/[\n\r]+/g, ', ').trim();
+    }
+
+    // 8. Country of Origin (Handles dash, colon, whitespace)
+    const originMatch = text.match(
+      /(?:country\s*of\s*origin|made\s*in|product\s*of)\s*[\-:\.\s]+([a-zA-Z]+)/i
+    );
+    if (originMatch) {
+      const countryFound = originMatch[1].trim();
+      fields.country_of_origin = countryFound.charAt(0).toUpperCase() + countryFound.slice(1).toLowerCase();
+    } else if (/made\s*in\s*india/i.test(text)) {
       fields.country_of_origin = 'India';
-    } else {
-      const originMatch = text.match(/(?:country\s*of\s*origin|made\s*in)\s*[:\.\-]?\s*([a-zA-Z]+)/i);
-      if (originMatch) {
-        fields.country_of_origin = originMatch[1].trim();
-      }
     }
 
     return fields;

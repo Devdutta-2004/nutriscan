@@ -40,8 +40,8 @@ class Big8Checker:
         # 1. Manufacturer / Importer Address (Rule 6(1)(a))
         mfg_val = label_data.get("manufacturer_address", "")
         importer_val = label_data.get("importer_address", "")
-        country = label_data.get("country_of_origin", "India")
-        is_imported = country and country.strip().lower() not in ["india", "in", "ind", "bharat"]
+        country = label_data.get("country_of_origin", "").strip()
+        is_imported = bool(country and country.lower() not in ["india", "in", "ind", "bharat", "missing", "none"])
 
         if is_imported:
             if not importer_val or importer_val.strip().lower() in ["missing", "none", ""]:

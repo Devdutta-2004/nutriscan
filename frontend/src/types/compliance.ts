@@ -63,6 +63,7 @@ export interface AuditReport {
   legal_status: string;
   status_text?: string;
   compliance_score: number;
+  corpus_version?: string;
   summary: {
     total_mandates_checked: number;
     compliant_count: number;
