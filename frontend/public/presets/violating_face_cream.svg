@@ -1,0 +1,80 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 480" width="100%" height="100%">
+  <defs>
+    <linearGradient id="cosmetic-bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#231728" />
+      <stop offset="100%" stop-color="#120c15" />
+    </linearGradient>
+    <linearGradient id="rose-gold" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#fb7185" />
+      <stop offset="100%" stop-color="#fda4af" />
+    </linearGradient>
+    <filter id="shadow" x="-5%" y="-5%" width="110%" height="110%">
+      <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#000" flood-opacity="0.5" />
+    </filter>
+  </defs>
+
+  <!-- Background Card -->
+  <rect x="20" y="15" width="560" height="455" rx="16" fill="url(#cosmetic-bg)" stroke="#4c2c54" stroke-width="1.5" filter="url(#shadow)"/>
+
+  <!-- Accent Header -->
+  <rect x="20" y="15" width="560" height="8" rx="4" fill="url(#rose-gold)" />
+
+  <!-- Generic Name Area (y: 35-83) -->
+  <g transform="translate(45, 35)">
+    <rect width="510" height="48" rx="8" fill="#1c1322" stroke="#3b2344" stroke-width="1"/>
+    <text x="16" y="20" font-family="'Inter', sans-serif" font-size="9" font-weight="700" fill="#10b981">GENERIC NAME (RULE 6(1)(b))</text>
+    <text x="16" y="38" font-family="'Inter', sans-serif" font-size="14" font-weight="700" fill="#fdf2f8">Hydrating Radiance Face Cream</text>
+    <text x="495" y="32" font-family="'Inter', sans-serif" font-size="11" font-weight="600" fill="#e879f9" text-anchor="end">Dermatologically Tested</text>
+  </g>
+
+  <!-- Row 1: Net Qty (x: 45, y: 105) & MRP (x: 300, y: 105) -->
+  <g transform="translate(45, 105)">
+    <rect width="235" height="42" rx="8" fill="#1c1322" stroke="#3b2344" stroke-width="1"/>
+    <text x="14" y="18" font-family="'Inter', sans-serif" font-size="9" font-weight="700" fill="#10b981">NET VOLUME (RULE 6(1)(c))</text>
+    <text x="14" y="34" font-family="'JetBrains Mono', monospace" font-size="13" font-weight="700" fill="#fdf2f8">Net Volume: 50 ml</text>
+  </g>
+
+  <g transform="translate(300, 105)">
+    <rect width="255" height="42" rx="8" fill="#1c1322" stroke="#3b2344" stroke-width="1"/>
+    <text x="14" y="18" font-family="'Inter', sans-serif" font-size="9" font-weight="700" fill="#10b981">MAX RETAIL PRICE (RULE 6(1)(d))</text>
+    <text x="14" y="34" font-family="'JetBrains Mono', monospace" font-size="13" font-weight="700" fill="#fdf2f8">MRP: ₹450.00 <tspan font-size="10" fill="#cbd5e1">(incl. of all taxes)</tspan></text>
+  </g>
+
+  <!-- Row 2: BLANK / MISSING USP AREA (VIOLATION) (x: 45, y: 165) -->
+  <g transform="translate(45, 165)">
+    <rect width="510" height="48" rx="8" fill="#2d121b" stroke="#f43f5e" stroke-width="1.5" stroke-dasharray="6,4"/>
+    <circle cx="28" cy="24" r="13" fill="#f43f5e" opacity="0.2"/>
+    <text x="28" y="29" font-family="'Inter', sans-serif" font-size="15" font-weight="800" fill="#f43f5e" text-anchor="middle">!</text>
+    <text x="52" y="21" font-family="'Inter', sans-serif" font-size="10" font-weight="800" fill="#f43f5e" letter-spacing="1">STATUTORY CONTRAVENTION: RULE 6(1)(s)</text>
+    <text x="52" y="38" font-family="'Inter', sans-serif" font-size="12" font-weight="600" fill="#fda4af">Mandatory Unit Sale Price (₹9.00/ml or ₹900.00/100ml) OMITTED FROM LABEL</text>
+  </g>
+
+  <!-- Row 3: Date of Packaging (x: 45, y: 235) -->
+  <g transform="translate(45, 235)">
+    <rect width="235" height="40" rx="8" fill="#1c1322" stroke="#3b2344" stroke-width="1"/>
+    <text x="14" y="17" font-family="'Inter', sans-serif" font-size="9" font-weight="700" fill="#10b981">DATE OF PACKAGING (RULE 6(1)(e))</text>
+    <text x="14" y="32" font-family="'JetBrains Mono', monospace" font-size="13" font-weight="700" fill="#fdf2f8">Mfg Date: 01/2024</text>
+  </g>
+
+  <!-- Row 4: Manufacturer Address (x: 45, y: 295) -->
+  <g transform="translate(45, 295)">
+    <rect width="510" height="58" rx="8" fill="#1c1322" stroke="#3b2344" stroke-width="1"/>
+    <text x="14" y="18" font-family="'Inter', sans-serif" font-size="9" font-weight="700" fill="#10b981">MANUFACTURER ADDRESS (RULE 6(1)(a))</text>
+    <text x="14" y="35" font-family="'Inter', sans-serif" font-size="11.5" font-weight="500" fill="#e2e8f0">Mfd by: Aura Naturals Cosmetics Pvt Ltd,</text>
+    <text x="14" y="49" font-family="'Inter', sans-serif" font-size="11.5" font-weight="500" fill="#94a3b8">Sector 62, Noida, Gautam Buddha Nagar, UP - 201309</text>
+  </g>
+
+  <!-- Row 5: Consumer Care Warning (x: 45, y: 370) -->
+  <g transform="translate(45, 370)">
+    <rect width="510" height="45" rx="8" fill="#2d2212" stroke="#fbbf24" stroke-width="1.5"/>
+    <text x="14" y="16" font-family="'Inter', sans-serif" font-size="9" font-weight="700" fill="#fbbf24">CONSUMER REDRESSAL WARNING (RULE 6(1)(h))</text>
+    <text x="14" y="32" font-family="'Inter', sans-serif" font-size="11" font-weight="500" fill="#fef08a">Care Helpline: 1800-200-9988 <tspan fill="#f87171" font-weight="700">[Missing Mandatory Redressal Email Address]</tspan></text>
+  </g>
+
+  <!-- Row 6: Country of Origin (x: 45, y: 432) -->
+  <g transform="translate(45, 432)">
+    <rect width="210" height="36" rx="8" fill="#1c1322" stroke="#3b2344" stroke-width="1"/>
+    <text x="14" y="15" font-family="'Inter', sans-serif" font-size="9" font-weight="700" fill="#10b981">COUNTRY OF ORIGIN (RULE 6(1)(g))</text>
+    <text x="14" y="29" font-family="'Inter', sans-serif" font-size="11" font-weight="600" fill="#fdf2f8">Made in India</text>
+  </g>
+</svg>

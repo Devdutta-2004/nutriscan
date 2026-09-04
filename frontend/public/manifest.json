@@ -1,0 +1,49 @@
+{
+  "name": "NutriScan - LMPC & Nutrition Compliance Auditor",
+  "short_name": "NutriScan",
+  "description": "Deterministic LMPC packaging compliance and Big-8 nutritional intelligence scanner.",
+  "start_url": "/",
+  "id": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#F7F5EC",
+  "theme_color": "#0E1118",
+  "categories": ["food", "utilities", "productivity"],
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Scan Product Label",
+      "short_name": "Scan",
+      "description": "Instantly open the camera scanner",
+      "url": "/?action=scan",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Upload Label Photo",
+      "short_name": "Upload",
+      "description": "Upload a package label for instant audit",
+      "url": "/?action=upload",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "View Insights & Big-8",
+      "short_name": "Insights",
+      "description": "Nutritional and compliance breakdown",
+      "url": "/?tab=insights",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    }
+  ]
+}

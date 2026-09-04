@@ -1,0 +1,87 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 450" width="100%" height="100%">
+  <defs>
+    <linearGradient id="bg-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1e2230" />
+      <stop offset="100%" stop-color="#0f1118" />
+    </linearGradient>
+    <linearGradient id="biscuit-gold" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#d97706" />
+      <stop offset="100%" stop-color="#f59e0b" />
+    </linearGradient>
+    <filter id="shadow" x="-5%" y="-5%" width="110%" height="110%">
+      <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#000" flood-opacity="0.5" />
+    </filter>
+  </defs>
+
+  <!-- Background Card / Package Wrapper -->
+  <rect x="20" y="15" width="560" height="420" rx="16" fill="url(#bg-grad)" stroke="#374151" stroke-width="1.5" filter="url(#shadow)"/>
+
+  <!-- Brand Accent Header Bar -->
+  <rect x="20" y="15" width="560" height="8" rx="4" fill="url(#biscuit-gold)" />
+
+  <!-- Packaging Title / Generic Name Area (y: 35-83) -->
+  <g transform="translate(45, 35)">
+    <rect width="510" height="48" rx="8" fill="#181b26" stroke="#2a2e3f" stroke-width="1"/>
+    <circle cx="28" cy="24" r="14" fill="#059669" opacity="0.2"/>
+    <path d="M22 24l4 4 8-8" stroke="#10b981" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+    <text x="54" y="22" font-family="'Inter', sans-serif" font-size="10" font-weight="700" fill="#10b981" letter-spacing="1">GENERIC NAME (RULE 6(1)(b))</text>
+    <text x="54" y="38" font-family="'Inter', sans-serif" font-size="14" font-weight="700" fill="#f3f4f6">Digestive Whole Wheat Biscuits</text>
+    <text x="490" y="28" font-family="'Inter', sans-serif" font-size="12" font-weight="600" fill="#9ca3af" text-anchor="end">High Fibre • 100% Atta</text>
+  </g>
+
+  <!-- Row 1: Net Qty (x: 45, y: 105) & MRP (x: 300, y: 105) -->
+  <g transform="translate(45, 105)">
+    <rect width="235" height="42" rx="8" fill="#181b26" stroke="#2a2e3f" stroke-width="1"/>
+    <text x="14" y="18" font-family="'Inter', sans-serif" font-size="9" font-weight="700" fill="#10b981">NET QUANTITY (RULE 6(1)(c))</text>
+    <text x="14" y="34" font-family="'JetBrains Mono', monospace" font-size="13" font-weight="700" fill="#f9fafb">Net Weight: 400 g</text>
+  </g>
+
+  <g transform="translate(300, 105)">
+    <rect width="255" height="42" rx="8" fill="#181b26" stroke="#2a2e3f" stroke-width="1"/>
+    <text x="14" y="18" font-family="'Inter', sans-serif" font-size="9" font-weight="700" fill="#10b981">MAX RETAIL PRICE (RULE 6(1)(d))</text>
+    <text x="14" y="34" font-family="'JetBrains Mono', monospace" font-size="13" font-weight="700" fill="#f9fafb">MRP ₹80.00 <tspan font-size="10" fill="#9ca3af">(incl. of all taxes)</tspan></text>
+  </g>
+
+  <!-- Row 2: USP (x: 45, y: 165) & Mfg Date (x: 300, y: 165) -->
+  <g transform="translate(45, 165)">
+    <rect width="235" height="42" rx="8" fill="#181b26" stroke="#2a2e3f" stroke-width="1"/>
+    <text x="14" y="18" font-family="'Inter', sans-serif" font-size="9" font-weight="700" fill="#10b981">UNIT SALE PRICE (RULE 6(1)(s))</text>
+    <text x="14" y="34" font-family="'JetBrains Mono', monospace" font-size="13" font-weight="700" fill="#10b981">USP: ₹0.20 / g</text>
+  </g>
+
+  <g transform="translate(300, 165)">
+    <rect width="255" height="42" rx="8" fill="#181b26" stroke="#2a2e3f" stroke-width="1"/>
+    <text x="14" y="18" font-family="'Inter', sans-serif" font-size="9" font-weight="700" fill="#10b981">DATE OF PACKAGING (RULE 6(1)(e))</text>
+    <text x="14" y="34" font-family="'JetBrains Mono', monospace" font-size="13" font-weight="700" fill="#f9fafb">Pkg Date: 03/2024</text>
+  </g>
+
+  <!-- Row 3: Manufacturer Address (x: 45, y: 228) -->
+  <g transform="translate(45, 228)">
+    <rect width="510" height="65" rx="8" fill="#181b26" stroke="#2a2e3f" stroke-width="1"/>
+    <text x="14" y="18" font-family="'Inter', sans-serif" font-size="9" font-weight="700" fill="#10b981">MANUFACTURER POSTAL ADDRESS (RULE 6(1)(a))</text>
+    <text x="14" y="36" font-family="'Inter', sans-serif" font-size="11.5" font-weight="500" fill="#e5e7eb">Mfd by: Sunlight Confectioneries Ltd., Plot 14, Phase II,</text>
+    <text x="14" y="52" font-family="'Inter', sans-serif" font-size="11.5" font-weight="500" fill="#9ca3af">Peenya Industrial Area, Bengaluru, Karnataka - 560058</text>
+  </g>
+
+  <!-- Row 4: Consumer Care Details (x: 45, y: 312) -->
+  <g transform="translate(45, 312)">
+    <rect width="510" height="45" rx="8" fill="#181b26" stroke="#2a2e3f" stroke-width="1"/>
+    <text x="14" y="16" font-family="'Inter', sans-serif" font-size="9" font-weight="700" fill="#10b981">CONSUMER CARE & GRIEVANCE REDRESSAL (RULE 6(1)(h))</text>
+    <text x="14" y="33" font-family="'Inter', sans-serif" font-size="11.5" font-weight="500" fill="#e5e7eb">Consumer Care: +91-80-28394000 | Email: care@sunlightbiscuits.in</text>
+  </g>
+
+  <!-- Row 5: Country of Origin (x: 45, y: 375) + Barcode -->
+  <g transform="translate(45, 375)">
+    <rect width="250" height="36" rx="8" fill="#181b26" stroke="#2a2e3f" stroke-width="1"/>
+    <text x="14" y="15" font-family="'Inter', sans-serif" font-size="9" font-weight="700" fill="#10b981">COUNTRY OF ORIGIN (RULE 6(1)(g))</text>
+    <text x="14" y="29" font-family="'Inter', sans-serif" font-size="11" font-weight="600" fill="#e5e7eb">Country of Origin: India</text>
+  </g>
+
+  <!-- Barcode Display -->
+  <g transform="translate(360, 370)">
+    <rect width="195" height="42" fill="#fff" rx="4"/>
+    <!-- Mock Barcode Lines -->
+    <path d="M15 8v26M19 8v26M22 8v26M27 8v26M33 8v26M38 8v26M42 8v26M48 8v26M54 8v26M60 8v26M66 8v26M72 8v26M78 8v26M85 8v26M90 8v26M96 8v26M102 8v26M110 8v26M116 8v26M122 8v26M130 8v26M138 8v26M145 8v26M152 8v26M160 8v26M168 8v26M175 8v26M180 8v26" stroke="#111827" stroke-width="2.5"/>
+    <text x="97" y="39" font-family="'JetBrains Mono', monospace" font-size="7" fill="#111827" text-anchor="middle">8 901234 567890</text>
+  </g>
+</svg>

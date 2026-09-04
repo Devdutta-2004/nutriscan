@@ -1,0 +1,74 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 450" width="100%" height="100%">
+  <defs>
+    <linearGradient id="choc-bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#211511" />
+      <stop offset="100%" stop-color="#110b08" />
+    </linearGradient>
+    <linearGradient id="gold-swiss" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#ea580c" />
+      <stop offset="100%" stop-color="#f97316" />
+    </linearGradient>
+    <filter id="shadow" x="-5%" y="-5%" width="110%" height="110%">
+      <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#000" flood-opacity="0.5" />
+    </filter>
+  </defs>
+
+  <!-- Background Card -->
+  <rect x="20" y="15" width="560" height="420" rx="16" fill="url(#choc-bg)" stroke="#4a2e22" stroke-width="1.5" filter="url(#shadow)"/>
+
+  <!-- Accent Header -->
+  <rect x="20" y="15" width="560" height="8" rx="4" fill="url(#gold-swiss)" />
+
+  <!-- Generic Name (y: 35-83) -->
+  <g transform="translate(45, 35)">
+    <rect width="510" height="48" rx="8" fill="#1b120f" stroke="#3d251c" stroke-width="1"/>
+    <text x="16" y="20" font-family="'Inter', sans-serif" font-size="9" font-weight="700" fill="#10b981">GENERIC NAME (RULE 6(1)(b))</text>
+    <text x="16" y="38" font-family="'Inter', sans-serif" font-size="14" font-weight="700" fill="#ffedd5">Artisanal Dark Chocolate 70% Cocoa</text>
+    <text x="495" y="32" font-family="'Inter', sans-serif" font-size="11" font-weight="600" fill="#fb923c" text-anchor="end">Swiss Master Chocolatier</text>
+  </g>
+
+  <!-- Row 1: Net Qty (x: 45, y: 105) & MRP (x: 300, y: 105) -->
+  <g transform="translate(45, 105)">
+    <rect width="235" height="42" rx="8" fill="#1b120f" stroke="#3d251c" stroke-width="1"/>
+    <text x="14" y="18" font-family="'Inter', sans-serif" font-size="9" font-weight="700" fill="#10b981">NET WEIGHT (RULE 6(1)(c))</text>
+    <text x="14" y="34" font-family="'JetBrains Mono', monospace" font-size="13" font-weight="700" fill="#ffedd5">Net Weight: 100 g</text>
+  </g>
+
+  <g transform="translate(300, 105)">
+    <rect width="255" height="42" rx="8" fill="#2d2212" stroke="#fbbf24" stroke-width="1.5"/>
+    <text x="14" y="18" font-family="'Inter', sans-serif" font-size="9" font-weight="700" fill="#fbbf24">MRP WARNING (RULE 6(1)(d))</text>
+    <text x="14" y="34" font-family="'JetBrains Mono', monospace" font-size="13" font-weight="700" fill="#fef08a">MRP ₹350.00 <tspan font-size="10" fill="#f87171">[Missing Tax Clause]</tspan></text>
+  </g>
+
+  <!-- Row 2: USP MISMATCH VIOLATION (x: 45, y: 165) -->
+  <g transform="translate(45, 165)">
+    <rect width="510" height="48" rx="8" fill="#2d121b" stroke="#f43f5e" stroke-width="1.5"/>
+    <circle cx="28" cy="24" r="13" fill="#f43f5e" opacity="0.2"/>
+    <text x="28" y="29" font-family="'Inter', sans-serif" font-size="15" font-weight="800" fill="#f43f5e" text-anchor="middle">✕</text>
+    <text x="52" y="21" font-family="'Inter', sans-serif" font-size="10" font-weight="800" fill="#f43f5e" letter-spacing="1">MATHEMATICAL USP MISMATCH: RULE 6(1)(s)</text>
+    <text x="52" y="38" font-family="'JetBrains Mono', monospace" font-size="12" font-weight="700" fill="#fda4af">Printed: ₹5.50/g  ≠  Calculated: ₹3.50/g (₹350 ÷ 100g)</text>
+  </g>
+
+  <!-- Row 3: Foreign Mfg (NO INDIAN IMPORTER) (x: 45, y: 235) -->
+  <g transform="translate(45, 235)">
+    <rect width="510" height="58" rx="8" fill="#2d121b" stroke="#f43f5e" stroke-width="1.5"/>
+    <text x="14" y="18" font-family="'Inter', sans-serif" font-size="9" font-weight="800" fill="#f43f5e">MISSING INDIAN IMPORTER DECLARATION: RULE 6(1)(a) &amp; 6(1)(g)</text>
+    <text x="14" y="35" font-family="'Inter', sans-serif" font-size="11" font-weight="500" fill="#fecdd3">Mfd in Switzerland by: Alpine Chocolatier AG, Bahnhofstrasse 42, 8001 Zurich</text>
+    <text x="14" y="49" font-family="'Inter', sans-serif" font-size="11" font-weight="700" fill="#f43f5e">[DEFECT: No Indian Importer Postal Address &amp; Reg. PIN Code on Pack]</text>
+  </g>
+
+  <!-- Row 4: Foreign Helpline (NO INDIAN GRIEVANCE) (x: 45, y: 312) -->
+  <g transform="translate(45, 312)">
+    <rect width="510" height="50" rx="8" fill="#2d121b" stroke="#f43f5e" stroke-width="1.5"/>
+    <text x="14" y="17" font-family="'Inter', sans-serif" font-size="9" font-weight="800" fill="#f43f5e">CONSUMER GRIEVANCE DEFECT: RULE 6(1)(h)</text>
+    <text x="14" y="33" font-family="'Inter', sans-serif" font-size="11" font-weight="500" fill="#fecdd3">Swiss Helpline: +41-44-211-0000</text>
+    <text x="14" y="46" font-family="'Inter', sans-serif" font-size="10.5" font-weight="700" fill="#f43f5e">[DEFECT: No Domestic Indian redressal officer, phone number, or email address]</text>
+  </g>
+
+  <!-- Row 5: Country of Origin (x: 45, y: 382) -->
+  <g transform="translate(45, 382)">
+    <rect width="260" height="36" rx="8" fill="#1b120f" stroke="#3d251c" stroke-width="1"/>
+    <text x="14" y="15" font-family="'Inter', sans-serif" font-size="9" font-weight="700" fill="#10b981">COUNTRY OF ORIGIN (RULE 6(1)(g))</text>
+    <text x="14" y="29" font-family="'Inter', sans-serif" font-size="11" font-weight="600" fill="#ffedd5">Country of Origin: Switzerland</text>
+  </g>
+</svg>
