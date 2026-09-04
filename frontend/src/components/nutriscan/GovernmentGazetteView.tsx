@@ -259,6 +259,73 @@ export const GovernmentGazetteView: React.FC<GovernmentGazetteViewProps> = ({
             </div>
           </div>
         </div>
+
+        {/* Official Gazette Credentials & 7 Statutory Schedules Banner */}
+        <div className="bg-gradient-to-r from-zinc-950 via-zinc-900 to-zinc-950 rounded-3xl p-5 sm:p-6 text-white border border-zinc-800 shadow-md space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-white/10">
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="px-2 py-0.5 rounded-md bg-[#D5FF3F] text-zinc-950 text-[10px] font-black font-mono uppercase">
+                  OFFICIAL GAZETTE OF INDIA • भारत का राजपत्र
+                </span>
+                <span className="text-[11px] font-mono text-zinc-400">REGD. NO. D. L.-33004/99</span>
+              </div>
+              <h4 className="text-sm sm:text-base font-black text-white mt-1">
+                Notification G.S.R. 202(E) / सा.का.नि. 202(अ) • File [F. No. WM-9(6)/2010-Pt.]
+              </h4>
+              <p className="text-xs text-zinc-400">
+                Ministry of Consumer Affairs, Food &amp; Public Distribution • Signed by Rakesh Kacker, Special Secretary
+              </p>
+            </div>
+            <div className="text-right shrink-0">
+              <span className="text-[11px] font-mono text-emerald-400 font-bold block">Enforced 1st April 2011</span>
+              <span className="text-[10px] text-zinc-500 font-mono">Part II—Sec. 3(i) No. 124</span>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <p className="text-xs font-bold text-zinc-300 uppercase tracking-wider font-mono">
+              7 Statutory Schedules &amp; Enforcement Inspection Forms:
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 text-xs">
+              <div className="p-3 rounded-2xl bg-white/5 border border-white/10 space-y-1">
+                <span className="font-mono text-[10px] text-[#D5FF3F] font-bold block">FIRST SCHEDULE (Rule 2(e))</span>
+                <p className="font-bold text-zinc-200">Maximum Permissible Error (MPE)</p>
+                <p className="text-[11px] text-zinc-400">Table I (Weight/Volume: 9% to 1%) &amp; Table II (Length/Area: 2% to 4%)</p>
+              </div>
+
+              <div className="p-3 rounded-2xl bg-white/5 border border-white/10 space-y-1">
+                <span className="font-mono text-[10px] text-[#D5FF3F] font-bold block">SECOND SCHEDULE (Rule 5)</span>
+                <p className="font-bold text-zinc-200">Standard Pack Sizes</p>
+                <p className="text-[11px] text-zinc-400">Prescribed quantities for biscuits, bread, tea, coffee, edible oils, soaps</p>
+              </div>
+
+              <div className="p-3 rounded-2xl bg-white/5 border border-white/10 space-y-1">
+                <span className="font-mono text-[10px] text-[#D5FF3F] font-bold block">THIRD SCHEDULE (Rule 11(4))</span>
+                <p className="font-bold text-zinc-200">"When Packed" Qualifier</p>
+                <p className="text-[11px] text-zinc-400">Permitted only for commodities subject to moisture variation: soaps, lotions, creams</p>
+              </div>
+
+              <div className="p-3 rounded-2xl bg-white/5 border border-white/10 space-y-1">
+                <span className="font-mono text-[10px] text-[#D5FF3F] font-bold block">FOURTH SCHEDULE (Rule 12(2))</span>
+                <p className="font-bold text-zinc-200">Exceptions: Weight / Volume</p>
+                <p className="text-[11px] text-zinc-400">Table of 26 items sold by mass or volume (curd, sauces, aerosol, cables)</p>
+              </div>
+
+              <div className="p-3 rounded-2xl bg-white/5 border border-white/10 space-y-1">
+                <span className="font-mono text-[10px] text-[#D5FF3F] font-bold block">FIFTH SCHEDULE (Rule 19)</span>
+                <p className="font-bold text-zinc-200">Statistical Sample Sizes</p>
+                <p className="text-[11px] text-zinc-400">Lot &lt; 4000: 32 samples • Lot &gt; 4000: 80 samples drawn across 8 points of stock</p>
+              </div>
+
+              <div className="p-3 rounded-2xl bg-white/5 border border-white/10 space-y-1">
+                <span className="font-mono text-[10px] text-[#D5FF3F] font-bold block">SIXTH &amp; SEVENTH SCHEDULE</span>
+                <p className="font-bold text-zinc-200">Form A &amp; Form B Inspection Sheets</p>
+                <p className="text-[11px] text-zinc-400">Official Legal Metrology Officer Data Sheets for net quantity and tare verification</p>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* 3. Interactive Gazette Rules & Verbatim Text Explorer */}
