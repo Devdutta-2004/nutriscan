@@ -230,7 +230,9 @@ export const Big8Checklist: React.FC<Big8ChecklistProps> = ({
                   <div className="pt-1 border-t border-indigo-100 flex items-center justify-between text-[11px] font-semibold text-indigo-900">
                     <span>Applicable Statutory Penalty:</span>
                     <span className="font-bold text-rose-700">
-                      {item.gazette_citation.penalty_rule || 'Rule 32 (Fine up to ₹25,000)'}
+                      {typeof item.gazette_citation.penalty_rule === 'object'
+                        ? item.gazette_citation.penalty_rule?.title || item.gazette_citation.penalty_rule?.id || 'Rule 32'
+                        : item.gazette_citation.penalty_rule || 'Rule 32 (Fine up to ₹25,000)'}
                     </span>
                   </div>
                 </div>

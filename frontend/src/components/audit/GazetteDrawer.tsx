@@ -86,7 +86,11 @@ export const GazetteDrawer: React.FC<GazetteDrawerProps> = ({ selectedItem }) =>
           {/* Sanction Provision */}
           <div className="flex items-center justify-between p-2.5 rounded-xl bg-rose-950/20 border border-rose-500/20 text-rose-300 text-[11px]">
             <span className="font-semibold">Applicable Sanction Provision:</span>
-            <span className="font-mono font-bold">{citation.penalty_rule}</span>
+            <span className="font-mono font-bold">
+              {typeof citation.penalty_rule === 'object'
+                ? (citation.penalty_rule as any)?.title || (citation.penalty_rule as any)?.id || 'Rule 32'
+                : citation.penalty_rule || 'Rule 32'}
+            </span>
           </div>
         </div>
       )}

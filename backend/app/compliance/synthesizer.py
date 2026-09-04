@@ -43,17 +43,27 @@ class AuditSynthesizer:
                 # 3. Fetch related rules
                 related_rules = lmpc_retrieval_engine.get_related_rules(citation_key)
                 # 4. Fetch penalty info
-                penalty_rule = lmpc_retrieval_engine.get_penalty_for_rule(citation_key)
+                penalty_chunk = lmpc_retrieval_engine.get_penalty_for_rule(citation_key)
+                if penalty_chunk and isinstance(penalty_chunk, dict):
+                    penalty_str = penalty_chunk.get('title') or f"{penalty_chunk.get('id', 'Rule 32')} - General Penalty"
+                else:
+                    penalty_str = "Rule 32 - General Penalty (Fine up to ₹25,000)"
+
+                # Safe string list for related rules
+                safe_related = [
+                    r.get('id') if isinstance(r, dict) else str(r)
+                    for r in (related_rules or [])
+                ]
                 
                 gazette_citation = {
                     "rule": direct_chunk.get('title') or direct_chunk.get('id'),
-                    "gazette_ref": direct_chunk.get('gazette_ref', 'G.S.R. XXX(E)'),
-                    "verbatim_clause": direct_chunk.get('content', ''),
+                    "gazette_ref": direct_chunk.get('gazette_ref', 'G.S.R. 202(E)'),
+                    "verbatim_clause": direct_chunk.get('verbatim_text') or direct_chunk.get('content', ''),
                     "officer_guidance": direct_chunk.get('officer_guidance', ''),
-                    "penalty_rule": penalty_rule,
+                    "penalty_rule": penalty_str,
                     "effective_date": direct_chunk.get('effective_date', ''),
-                    "amendment_refs": direct_chunk.get('amendments', []),
-                    "related_rules": related_rules
+                    "amendment_refs": direct_chunk.get('amendment_refs', []) or direct_chunk.get('amendments', []),
+                    "related_rules": safe_related
                 }
         
         enriched_item = dict(checklist_item)

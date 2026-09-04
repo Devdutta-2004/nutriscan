@@ -55,6 +55,7 @@ export const NutriHeader: React.FC<NutriHeaderProps> = ({
             { id: 'home', label: 'Home' },
             { id: 'insights', label: 'Insights' },
             { id: 'category', label: 'Category' },
+            { id: 'gazette', label: 'Government Gazette' },
             { id: 'profile', label: 'Profile' },
           ].map((tab) => (
             <button
@@ -192,6 +193,17 @@ export const NutriHeader: React.FC<NutriHeaderProps> = ({
                 <span className="text-xs font-bold text-zinc-800">Category Comparison &amp; Presets</span>
               </div>
               <ChevronRight className="w-3.5 h-3.5 text-zinc-400" />
+            </button>
+
+            <button
+              onClick={() => handleMobileAction(() => onSelectTab('gazette'))}
+              className="w-full flex items-center justify-between p-2 rounded-xl bg-indigo-50/70 hover:bg-indigo-100/70 transition-colors text-left text-indigo-900 font-bold text-xs"
+            >
+              <div className="flex items-center gap-2.5">
+                <div className="w-2 h-2 rounded-full bg-indigo-600" />
+                <span>Government Gazette &amp; Legal Guarantee</span>
+              </div>
+              <ChevronRight className="w-3.5 h-3.5 text-indigo-400" />
             </button>
 
             {onOpenNotice && (

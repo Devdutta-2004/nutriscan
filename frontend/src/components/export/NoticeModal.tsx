@@ -171,7 +171,9 @@ export const NoticeModal: React.FC<NoticeModalProps> = ({ isOpen, onClose, repor
                       </span>
                     </td>
                     <td className="p-3 font-mono text-zinc-400 text-[10.5px]">
-                      {item.gazette_citation?.penalty_rule || 'Rule 32'}
+                      {typeof item.gazette_citation?.penalty_rule === 'object'
+                        ? item.gazette_citation?.penalty_rule?.title || item.gazette_citation?.penalty_rule?.id || 'Rule 32'
+                        : item.gazette_citation?.penalty_rule || 'Rule 32'}
                     </td>
                   </tr>
                 ))}
@@ -180,7 +182,7 @@ export const NoticeModal: React.FC<NoticeModalProps> = ({ isOpen, onClose, repor
           </div>
 
           {/* Deterministic USP Mathematical Proof */}
-          {report.usp_verification.calculated && (
+          {report.usp_verification?.calculated && (
             <div className="p-4 rounded-xl bg-zinc-900/90 border border-white/10 font-mono text-xs space-y-1.5">
               <p className="font-bold text-emerald-400 uppercase tracking-wider text-[11px]">
                 Deterministic USP Mathematical Proof

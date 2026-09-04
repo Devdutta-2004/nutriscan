@@ -32,13 +32,37 @@ export interface DomainScore {
  * Calculates official Legal Metrology compliance grade (A+ to F).
  */
 export function calculateProductGrade(report: AuditReport): GradeDetails {
-  const violations = report.summary.violations_count;
-  const warnings = report.summary.warnings_count;
-  const score = report.compliance_score;
+  if (!report) {
+    return {
+      grade: 'A+',
+      title: 'Pending Inspection',
+      subtitle: 'Awaiting Specimen Analysis',
+      description: 'Upload packaging image to generate compliance grade.',
+      lawfulForSale: true,
+      color: '#10b981',
+      bgColor: 'bg-emerald-50 text-emerald-950',
+      textColor: 'text-emerald-700',
+      borderColor: 'border-emerald-300',
+      badgeBg: 'bg-[#D5FF3F] text-zinc-950 border border-emerald-400',
+      penaltyEstimate: '₹0',
+      actionRequired: 'Scan label to begin.',
+    };
+  }
+
+  const summary = report.summary || {
+    violations_count: (report.violations || []).length,
+    warnings_count: (report.warnings || []).length,
+    compliant_count: (report.checklist || []).filter((c) => c.status === 'COMPLIANT').length,
+    total_mandates_checked: (report.checklist || []).length || 11,
+  };
+
+  const violations = summary.violations_count ?? 0;
+  const warnings = summary.warnings_count ?? 0;
+  const score = report.compliance_score ?? 100;
 
   // Has critical math mismatch in USP
-  const hasUspViolation = report.violations?.some((v) => v.mandate_id === 'usp');
-  const hasDualMrp = report.violations?.some((v) => v.mandate_id === 'dual_mrp');
+  const hasUspViolation = (report.violations || []).some((v) => v.mandate_id === 'usp');
+  const hasDualMrp = (report.violations || []).some((v) => v.mandate_id === 'dual_mrp');
 
   if (violations === 0 && warnings === 0 && score >= 95) {
     return {

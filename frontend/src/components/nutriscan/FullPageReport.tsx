@@ -17,6 +17,13 @@ interface FullPageReportProps {
   onRescan?: () => void;
 }
 
+const formatPenaltyText = (val: any): string => {
+  if (!val) return 'Rule 32 (Fine up to ₹25,000)';
+  if (typeof val === 'string') return val;
+  if (typeof val === 'object') return val.title || val.id || 'Rule 32 (Fine up to ₹25,000)';
+  return String(val);
+};
+
 export const FullPageReport: React.FC<FullPageReportProps> = ({
   report,
   onClose,
@@ -36,10 +43,17 @@ export const FullPageReport: React.FC<FullPageReportProps> = ({
   const gradeInfo = calculateProductGrade(report);
   const domainScores = calculateDomainScores(report.checklist || []);
 
-  const total = report.summary.total_mandates_checked || 11;
-  const compliant = report.summary.compliant_count || 0;
-  const warnings = report.summary.warnings_count || 0;
-  const violations = report.summary.violations_count || 0;
+  const summary = report.summary || {
+    total_mandates_checked: (report.checklist || []).length || 11,
+    compliant_count: (report.checklist || []).filter((c) => c.status === 'COMPLIANT').length,
+    warnings_count: (report.checklist || []).filter((c) => c.status === 'WARNING').length,
+    violations_count: (report.checklist || []).filter((c) => c.status === 'VIOLATION').length,
+  };
+
+  const total = summary.total_mandates_checked || 11;
+  const compliant = summary.compliant_count || 0;
+  const warnings = summary.warnings_count || 0;
+  const violations = summary.violations_count || 0;
 
   // Donut Pie Chart calculations
   const radius = 58;
@@ -190,7 +204,7 @@ export const FullPageReport: React.FC<FullPageReportProps> = ({
 
                 <div className="pt-2 flex items-center gap-4 text-xs font-semibold text-zinc-600 flex-wrap">
                   <span>
-                    Audit Time: <strong className="text-zinc-900">{new Date(report.audit_timestamp).toLocaleString('en-IN')}</strong>
+                    Audit Time: <strong className="text-zinc-900">{report.audit_timestamp ? new Date(report.audit_timestamp).toLocaleString('en-IN') : new Date().toLocaleString('en-IN')}</strong>
                   </span>
                   <span>·</span>
                   <span>
@@ -718,7 +732,7 @@ export const FullPageReport: React.FC<FullPageReportProps> = ({
                         <div className="pt-2 border-t border-indigo-100 flex items-center justify-between text-xs font-semibold text-indigo-900">
                           <span>Statutory Sanction / Penalty:</span>
                           <span className="font-bold text-rose-700 font-mono">
-                            {item.gazette_citation.penalty_rule || 'Rule 32 (Fine up to ₹25,000)'}
+                            {formatPenaltyText(item.gazette_citation?.penalty_rule)}
                           </span>
                         </div>
                       </div>
@@ -831,7 +845,7 @@ export const FullPageReport: React.FC<FullPageReportProps> = ({
                   <div className="text-[11px] flex items-center justify-between text-zinc-500 font-medium">
                     <span>Gazette Ref: {item.gazette_citation?.gazette_ref || 'LMPC Rules 2011'}</span>
                     <span className="font-bold text-rose-700 font-mono">
-                      {item.gazette_citation?.penalty_rule || 'Rule 32'}
+                      {formatPenaltyText(item.gazette_citation?.penalty_rule)}
                     </span>
                   </div>
                 </div>

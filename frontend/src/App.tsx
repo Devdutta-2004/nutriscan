@@ -19,6 +19,8 @@ import { PromotionalShowcase } from './components/nutriscan/PromotionalShowcase'
 import { MobileQuickBar } from './components/nutriscan/MobileQuickBar';
 import { PWAInstallBanner } from './components/nutriscan/PWAInstallBanner';
 import { SIHProblemBanner } from './components/nutriscan/SIHProblemBanner';
+import { GovernmentGazetteView } from './components/nutriscan/GovernmentGazetteView';
+import { ErrorBoundary } from './components/common/ErrorBoundary';
 import { NoticeModal } from './components/export/NoticeModal';
 import { FairPackAPI } from './services/api';
 import { AuditReport } from './types/compliance';
@@ -51,7 +53,7 @@ export function App() {
           setIsUploadModalOpen(true);
         }
 
-        if (tabParam && ['home', 'insights', 'category', 'profile'].includes(tabParam)) {
+        if (tabParam && ['home', 'insights', 'category', 'profile', 'gazette'].includes(tabParam)) {
           setActiveTab(tabParam);
         }
       } catch (err) {
@@ -63,6 +65,11 @@ export function App() {
 
   const handleSelectItem = async (item: ScannedItem) => {
     try {
+      if (item.report) {
+        setReport(item.report);
+        setIsDrawerOpen(true);
+        return;
+      }
       const newReport = await FairPackAPI.runAudit(item.presetId);
       setReport(newReport);
       setIsDrawerOpen(true);
@@ -100,6 +107,7 @@ export function App() {
       icon: Camera,
       iconBg: 'bg-[#D5FF3F]/30 text-zinc-900',
       presetId: 'custom-upload',
+      report: newReport,
     };
 
     setRecentItems((prev) => [newItem, ...prev]);
@@ -260,6 +268,16 @@ export function App() {
             <ProfileView onOpenNotice={() => setIsNoticeOpen(true)} />
           </div>
         )}
+
+        {/* Tab 5: Government Gazette & Statutory Guarantee View */}
+        {activeTab === 'gazette' && (
+          <div className="max-w-5xl mx-auto">
+            <GovernmentGazetteView
+              onBackToHome={() => setActiveTab('home')}
+              onOpenNotice={() => setIsNoticeOpen(true)}
+            />
+          </div>
+        )}
       </div>
 
       {/* Floating Bottom Navigation Dock (Visible on Mobile & Tablet, and in Mobile Frame) */}
@@ -292,15 +310,20 @@ export function App() {
 
       {/* Full-Page Statutory Compliance Inspection Dashboard */}
       {isDrawerOpen && (
-        <FullPageReport
-          report={report}
-          onClose={() => setIsDrawerOpen(false)}
-          onOpenNotice={() => setIsNoticeOpen(true)}
-          onRescan={() => {
-            setIsDrawerOpen(false);
-            setIsScannerOpen(true);
-          }}
-        />
+        <ErrorBoundary
+          fallbackTitle="Inspection Report Recovery"
+          onReset={() => setIsDrawerOpen(false)}
+        >
+          <FullPageReport
+            report={report}
+            onClose={() => setIsDrawerOpen(false)}
+            onOpenNotice={() => setIsNoticeOpen(true)}
+            onRescan={() => {
+              setIsDrawerOpen(false);
+              setIsScannerOpen(true);
+            }}
+          />
+        </ErrorBoundary>
       )}
 
       {/* Official Notice of Non-Compliance (Rule 32) Modal */}

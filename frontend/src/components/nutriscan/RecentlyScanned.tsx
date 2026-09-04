@@ -1,5 +1,6 @@
 import React from 'react';
 import { Wheat, Coffee, Cookie } from 'lucide-react';
+import { AuditReport } from '../../types/compliance';
 
 export interface ScannedItem {
   id: string;
@@ -12,6 +13,7 @@ export interface ScannedItem {
   icon: any;
   iconBg: string;
   presetId: string;
+  report?: AuditReport;
 }
 
 interface RecentlyScannedProps {
