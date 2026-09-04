@@ -182,8 +182,12 @@ export function App() {
 
                   {/* Right Column (Desktop 5 cols) */}
                   <div className="lg:col-span-5 space-y-4">
-                    {/* Today's Snapshot */}
-                    <TodaySnapshot onViewAll={() => setActiveTab('insights')} />
+                    {/* Active Audit Result Snapshot */}
+                    <TodaySnapshot
+                      report={report}
+                      onViewAll={() => setActiveTab('insights')}
+                      onInspect={() => setIsDrawerOpen(true)}
+                    />
 
                     {/* Recently Scanned List */}
                     <RecentlyScanned
@@ -219,7 +223,11 @@ export function App() {
                   onInspectProduct={(presetId) => handleScanComplete(presetId)}
                 />
 
-                <TodaySnapshot onViewAll={() => setActiveTab('insights')} />
+                <TodaySnapshot
+                  report={report}
+                  onViewAll={() => setActiveTab('insights')}
+                  onInspect={() => setIsDrawerOpen(true)}
+                />
                 <CategoryBrowse onSelectCategory={() => setActiveTab('category')} />
                 <RecentlyScanned
                   items={recentItems}
