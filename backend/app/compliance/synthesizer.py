@@ -122,23 +122,27 @@ class AuditSynthesizer:
             logger.error(f"Gemini analysis failed: {e}")
             
         if gemini_result and 'findings' in gemini_result:
-            findings_map = {f.get('id') or f.get('item_id'): f for f in gemini_result.get('findings', [])}
+            findings_map = {}
+            for f in gemini_result.get('findings', []):
+                fid = f.get('mandate_id') or f.get('id') or f.get('item_id')
+                if fid:
+                    findings_map[fid] = f
             
             for item in enriched_checklist:
-                item_id = item.get('id')
+                item_id = item.get('mandate_id') or item.get('id')
                 if item_id in findings_map:
                     finding = findings_map[item_id]
-                    item['llm_reasoning'] = finding.get('llm_reasoning')
+                    item['llm_reasoning'] = finding.get('reasoning') or finding.get('llm_reasoning')
                     item['verbatim_citation'] = finding.get('verbatim_citation')
                     item['corrective_action'] = finding.get('corrective_action')
                     
                     # LLM can upgrade severity, not downgrade
-                    orig_status = item.get('status', 'OK')
-                    llm_status = finding.get('status', 'OK')
+                    orig_status = item.get('status', 'COMPLIANT')
+                    llm_status = finding.get('status', 'COMPLIANT')
                     
                     if orig_status != 'VIOLATION' and llm_status == 'VIOLATION':
                         item['status'] = 'VIOLATION'
-                    elif orig_status == 'OK' and llm_status == 'WARNING':
+                    elif orig_status == 'COMPLIANT' and llm_status == 'WARNING':
                         item['status'] = 'WARNING'
                         
         return cls._compile_report(

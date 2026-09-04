@@ -39,7 +39,7 @@ class Settings:
 
     # Gemini API Configuration
     GEMINI_API_KEY: str = os.getenv("GEMINI_API_KEY", "")
-    GEMINI_MODEL: str = os.getenv("GEMINI_MODEL", "gemini-3.6-flash")
+    GEMINI_MODEL: str = os.getenv("GEMINI_MODEL", "gemini-3.1-flash-lite")
     GEMINI_API_BASE: str = "https://generativelanguage.googleapis.com/v1beta"
 
     # RAG Configuration

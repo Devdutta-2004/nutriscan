@@ -257,6 +257,119 @@ Respond with valid JSON matching the required schema. Do NOT include any text ou
             logger.warning(f"Gemini API call failed: {e}")
             return None
 
+    async def extract_label_from_image(
+        self,
+        image_bytes: bytes,
+        mime_type: str = "image/jpeg"
+    ) -> Optional[Dict[str, Any]]:
+        """
+        Multimodal Perception: Uses Gemini Vision to read raw text from packaging image
+        without hallucinating compliance judgments.
+        Returns extracted key-value fields for the deterministic engine to judge.
+        """
+        if not self.is_available:
+            logger.info("Gemini API not available — skipping multimodal vision extraction")
+            return None
+
+        import base64
+        b64_data = base64.b64encode(image_bytes).decode("utf-8")
+
+        vision_prompt = """You are an OCR and Packaging Text Transcription System for Indian pre-packaged commodities.
+Read all printed text from this packaging image carefully, including text on curves, folds, reflective plastic, or barcode areas.
+
+Transcribe and extract the following exact fields if present on the label:
+- generic_name: The common or generic commodity name (e.g., 'RATLAMI SEV', 'POTATO CHIPS'). NOT just the brand logo.
+- net_quantity: The declared net quantity or weight in SI units (e.g., '200 g', '100 ml', '1 N'). Do NOT use 'per 100g' from the nutrition table.
+- mrp: Maximum retail price (e.g., 'Rs. 55.00' or '₹55.00 (INCL. OF ALL TAXES)').
+- unit_sale_price: Unit sale price if printed (e.g., 'Rs. 0.28 per g' or '₹0.28 / g').
+- mfg_date: Date/month of packaging, manufacture, or import (e.g., '09/08/2026', 'AUG 2026').
+- expiry_date: Best before date, expiry date, or use-by date (e.g., 'Best Before 6 Months', '2027-01-05').
+- manufacturer_address: Complete name and address of manufacturer, packer, or marketer, including PIN code.
+- importer_address: Complete name and address of Indian importer if imported product.
+- consumer_care_phone: Helpline or customer care phone number.
+- consumer_care_email: Official customer care email address.
+- country_of_origin: Declared country of manufacture/origin (e.g., 'India', 'Malaysia').
+- language_detected: Primary language of printed text (e.g., 'English', 'Hindi').
+- mrp_values: List of distinct MRP prices if more than one is printed on the package.
+
+Respond with valid JSON matching the schema below. If a field is not visible in this image crop, return null for that field. Do not invent details."""
+
+        vision_schema = {
+            "type": "object",
+            "properties": {
+                "generic_name": {"type": ["string", "null"]},
+                "net_quantity": {"type": ["string", "null"]},
+                "mrp": {"type": ["string", "null"]},
+                "unit_sale_price": {"type": ["string", "null"]},
+                "mfg_date": {"type": ["string", "null"]},
+                "expiry_date": {"type": ["string", "null"]},
+                "manufacturer_address": {"type": ["string", "null"]},
+                "importer_address": {"type": ["string", "null"]},
+                "consumer_care_phone": {"type": ["string", "null"]},
+                "consumer_care_email": {"type": ["string", "null"]},
+                "country_of_origin": {"type": ["string", "null"]},
+                "language_detected": {"type": ["string", "null"]},
+                "mrp_values": {"type": "array", "items": {"type": "string"}},
+                "raw_text_summary": {"type": "string", "description": "Complete transcription of all text blocks visible"}
+            },
+            "required": ["generic_name", "net_quantity", "mrp"]
+        }
+
+        url = f"{self._base_url}/models/{self._model}:generateContent"
+        params = {"key": self._api_key}
+
+        payload = {
+            "contents": [
+                {
+                    "role": "user",
+                    "parts": [
+                        {"text": vision_prompt},
+                        {
+                            "inline_data": {
+                                "mime_type": mime_type,
+                                "data": b64_data
+                            }
+                        }
+                    ]
+                }
+            ],
+            "generationConfig": {
+                "temperature": 0.0,
+                "topP": 0.8,
+                "maxOutputTokens": 2048,
+                "responseMimeType": "application/json",
+            }
+        }
+
+        try:
+            if HAS_HTTPX:
+                async with httpx.AsyncClient(timeout=45.0) as client:
+                    response = await client.post(url, params=params, json=payload)
+                    if response.status_code != 200:
+                        logger.warning(f"Gemini Vision API returned {response.status_code}: {response.text[:200]}")
+                        return None
+                    data = response.json()
+            else:
+                data = await asyncio.to_thread(self._call_gemini_urllib, url, params, payload)
+                if not data:
+                    return None
+
+            candidates = data.get("candidates", [])
+            if not candidates:
+                return None
+
+            content = candidates[0].get("content", {})
+            parts = content.get("parts", [])
+            if not parts:
+                return None
+
+            generated_text = parts[0].get("text", "")
+            return json.loads(generated_text)
+
+        except Exception as e:
+            logger.warning(f"Gemini Vision extraction failed: {e}")
+            return None
+
 
 # Global singleton
 gemini_engine = GeminiComplianceEngine()

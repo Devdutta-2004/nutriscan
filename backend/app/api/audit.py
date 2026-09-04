@@ -65,45 +65,56 @@ async def run_audit(req: AuditRequest):
     return report
 
 
+from app.rag.gemini_engine import gemini_engine
+
+
 @router.post("/upload")
 async def upload_and_audit(
     file: UploadFile = File(...),
     product_name: Optional[str] = Form("Scanned Packaging Specimen"),
-    product_category: Optional[str] = Form("general"),
+    product_category: Optional[str] = Form("food"),
     label_data_json: Optional[str] = Form(None)
 ):
     """
     Image upload endpoint for label compliance audit.
-    
-    Accepts uploaded image and optional pre-extracted label_data from
-    frontend OCR. If label_data_json is provided, uses that instead of
-    generating mock data.
+    1. Multimodal Vision: Reads packaging text using Gemini 3.6 Flash Vision (handles curved, glossy, folded labels).
+    2. Deterministic Legal Engine: Synthesizes statutory compliance, checks Rule 6(11) USP paise math, PIN code, and Rule 32 penalties.
     """
     # Read file content safely
     contents = await file.read()
     file_size_kb = round(len(contents) / 1024, 1)
 
-    # Use frontend-extracted label data if provided
+    label_data = {}
     if label_data_json:
         try:
             label_data = json.loads(label_data_json)
         except json.JSONDecodeError:
             label_data = {}
-    else:
-        # Fallback: minimal label data from filename
-        label_data = {
-            "generic_name": product_name or file.filename,
-        }
 
-    # Get bounding boxes from label data if present
+    # If Gemini Vision is available, run multimodal extraction on the raw photo bytes
+    if gemini_engine.is_available and len(contents) > 0:
+        mime_type = file.content_type or "image/jpeg"
+        vision_fields = await gemini_engine.extract_label_from_image(contents, mime_type=mime_type)
+        if vision_fields:
+            # Merge vision fields: vision data populates any missing/null fields
+            for k, v in vision_fields.items():
+                if v and (not label_data.get(k) or str(label_data.get(k)).strip().lower() in ["", "none", "missing", "n/a", "[not found]"]):
+                    label_data[k] = v
+
+    # Fallback to product_name or filename if generic name still missing
+    if not label_data.get("generic_name"):
+        clean_name = (file.filename or product_name or "Custom Specimen").replace(".jpg", "").replace(".png", "").replace(".jpeg", "")
+        if not clean_name.startswith("IMG") and not clean_name.startswith("upload"):
+            label_data["generic_name"] = clean_name
+
     bounding_boxes = label_data.pop("bounding_boxes", [])
 
     report = await AuditSynthesizer.synthesize_report_with_llm(
-        product_name=file.filename or product_name,
+        product_name=label_data.get("generic_name") or file.filename or product_name,
         label_data=label_data,
         tokens=bounding_boxes,
         image_metadata={"filename": file.filename, "size_kb": file_size_kb, "format": file.content_type},
-        product_category=product_category or "general"
+        product_category=product_category or "food"
     )
     report["bounding_boxes"] = bounding_boxes
     report["is_live_upload"] = True
