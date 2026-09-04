@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { STATUTORY_RULES, StatutoryRule } from '../../data/gazetteRules';
 import { HINDI_STATUTORY_MAP } from '../../data/hindiRulesMap';
+import { AshokaEmblem, JagoGrahakJagoLogo } from '../common/GovtEmblems';
 
 interface GovernmentGazetteViewProps {
   onBackToHome?: () => void;
@@ -64,10 +65,9 @@ export const GovernmentGazetteView: React.FC<GovernmentGazetteViewProps> = ({
         <div className="relative z-10 space-y-4">
           {/* Government of India Crest Bar */}
           <div className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-zinc-200">
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-2xl bg-[#0E1118] text-[#D5FF3F] flex items-center justify-center font-black shadow-md shrink-0">
-                <Scale className="w-6 h-6 stroke-[2.2]" />
-              </div>
+            <div className="flex items-center gap-3.5">
+              <AshokaEmblem size={38} />
+              <div className="h-8 w-px bg-zinc-200 hidden sm:block" />
               <div>
                 <p className="text-[10px] font-extrabold tracking-widest text-zinc-500 uppercase font-mono">
                   GOVERNMENT OF INDIA • भारत सरकार
@@ -81,7 +81,8 @@ export const GovernmentGazetteView: React.FC<GovernmentGazetteViewProps> = ({
               </div>
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-3">
+              <JagoGrahakJagoLogo size={32} />
               <span className="px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 text-[11px] font-black border border-emerald-300 flex items-center gap-1.5 shadow-xs">
                 <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
                 <span>Statutory Enforceability Guarantee</span>

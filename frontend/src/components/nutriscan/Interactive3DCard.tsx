@@ -17,6 +17,7 @@ export interface ProductShowcaseItem {
   gradient: string;
   accentColor: string;
   presetId: string;
+  bannerUrl: string;
   labelValues: {
     genericName: string;
     netQty: string;
@@ -44,6 +45,7 @@ export const SHOWCASE_PRODUCTS: ProductShowcaseItem[] = [
     gradient: 'from-amber-950 via-zinc-900 to-black',
     accentColor: '#D5FF3F',
     presetId: 'compliant-biscuit',
+    bannerUrl: '/banners/banner_goodday.jpg',
     labelValues: {
       genericName: 'Digestive Whole Wheat Biscuits',
       netQty: '400 g (SI Metric Compliant)',
@@ -73,6 +75,7 @@ export const SHOWCASE_PRODUCTS: ProductShowcaseItem[] = [
     gradient: 'from-purple-950 via-zinc-900 to-black',
     accentColor: '#C084FC',
     presetId: 'imported-chocolate',
+    bannerUrl: '/banners/banner_chocolate.jpg',
     labelValues: {
       genericName: 'Dark Chocolate Confectionery',
       netQty: '100 g',
@@ -103,6 +106,7 @@ export const SHOWCASE_PRODUCTS: ProductShowcaseItem[] = [
     gradient: 'from-rose-950 via-zinc-900 to-black',
     accentColor: '#FF2A85',
     presetId: 'violating-face-cream',
+    bannerUrl: '/banners/banner_cosmetic.jpg',
     labelValues: {
       genericName: 'Cosmetic Skin Repair Cream',
       netQty: '50 g (Net Weight)',
@@ -132,6 +136,7 @@ export const SHOWCASE_PRODUCTS: ProductShowcaseItem[] = [
     gradient: 'from-cyan-950 via-zinc-900 to-black',
     accentColor: '#26E1E8',
     presetId: 'compliant-biscuit',
+    bannerUrl: '/banners/banner_soda.jpg',
     labelValues: {
       genericName: 'Carbonated Lemon-Lime Water',
       netQty: '330 ml (Standard Can Schedule II)',
@@ -161,6 +166,7 @@ export const SHOWCASE_PRODUCTS: ProductShowcaseItem[] = [
     gradient: 'from-zinc-950 via-zinc-900 to-black',
     accentColor: '#D5FF3F',
     presetId: 'compliant-biscuit',
+    bannerUrl: '/banners/banner_protein.jpg',
     labelValues: {
       genericName: 'Whey Protein Dietary Supplement Powder',
       netQty: '1.0 kg (1000 g)',
@@ -187,7 +193,7 @@ interface Interactive3DCardProps {
 export const Interactive3DCard: React.FC<Interactive3DCardProps> = ({ onExploreProduct }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(true);
-  const [activeView, setActiveView] = useState<'visual' | 'label'>('visual');
+  const [activeView, setActiveView] = useState<'banner' | 'inspect' | 'label'>('banner');
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
   const product = SHOWCASE_PRODUCTS[currentIndex];
@@ -197,7 +203,7 @@ export const Interactive3DCard: React.FC<Interactive3DCardProps> = ({ onExploreP
     if (!isPlaying) return;
     timerRef.current = setInterval(() => {
       setCurrentIndex((prev) => (prev + 1) % SHOWCASE_PRODUCTS.length);
-    }, 6000);
+    }, 7000);
 
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
@@ -216,7 +222,7 @@ export const Interactive3DCard: React.FC<Interactive3DCardProps> = ({ onExploreP
     <div className="w-full space-y-3">
       {/* Full-Width Panoramic Product Inspection Showcase Container */}
       <div
-        className={`w-full rounded-[36px] bg-gradient-to-br ${product.gradient} border border-zinc-800 text-white p-6 sm:p-8 lg:p-10 shadow-2xl relative overflow-hidden transition-all duration-500`}
+        className={`w-full rounded-[36px] bg-gradient-to-br ${product.gradient} border border-zinc-800 text-white p-5 sm:p-7 lg:p-9 shadow-2xl relative overflow-hidden transition-all duration-500`}
       >
         {/* Subtle Ambient Light Glow */}
         <div
@@ -225,7 +231,7 @@ export const Interactive3DCard: React.FC<Interactive3DCardProps> = ({ onExploreP
         />
 
         {/* Top Meta Bar */}
-        <div className="relative z-10 flex flex-wrap items-center justify-between gap-3 pb-5 border-b border-white/10">
+        <div className="relative z-10 flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-white/10">
           <div className="flex items-center gap-2.5">
             <span
               className="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider shadow-sm"
@@ -242,25 +248,37 @@ export const Interactive3DCard: React.FC<Interactive3DCardProps> = ({ onExploreP
           </div>
 
           <div className="flex items-center gap-2">
-            {/* View Mode Toggle: Visual vs Detailed Label Board */}
+            {/* View Mode Toggle: Banner Graphic vs Vector Inspect vs Detailed Label Board */}
             <div className="flex items-center bg-white/10 p-1 rounded-xl border border-white/10 text-xs font-bold">
               <button
                 type="button"
-                onClick={() => setActiveView('visual')}
-                className={`px-3 py-1 rounded-lg transition-all ${
-                  activeView === 'visual'
-                    ? 'bg-white text-zinc-950 shadow-xs'
+                onClick={() => setActiveView('banner')}
+                className={`px-3 py-1 rounded-lg transition-all flex items-center gap-1.5 ${
+                  activeView === 'banner'
+                    ? 'bg-white text-zinc-950 shadow-xs font-black'
                     : 'text-zinc-300 hover:text-white'
                 }`}
               >
-                Packaging View
+                <Sparkles className="w-3 h-3 text-amber-500" />
+                <span>Showcase Banner</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveView('inspect')}
+                className={`px-3 py-1 rounded-lg transition-all flex items-center gap-1 ${
+                  activeView === 'inspect'
+                    ? 'bg-white text-zinc-950 shadow-xs font-black'
+                    : 'text-zinc-300 hover:text-white'
+                }`}
+              >
+                <span>3D Visual</span>
               </button>
               <button
                 type="button"
                 onClick={() => setActiveView('label')}
                 className={`px-3 py-1 rounded-lg transition-all flex items-center gap-1 ${
                   activeView === 'label'
-                    ? 'bg-white text-zinc-950 shadow-xs'
+                    ? 'bg-white text-zinc-950 shadow-xs font-black'
                     : 'text-zinc-300 hover:text-white'
                 }`}
               >
@@ -280,8 +298,62 @@ export const Interactive3DCard: React.FC<Interactive3DCardProps> = ({ onExploreP
           </div>
         </div>
 
-        {/* Main Content Area (Two Columns on Desktop) */}
-        <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 py-6 items-center">
+        {/* Dynamic Body Content depending on active view */}
+        {activeView === 'banner' ? (
+          /* High-Fidelity Informative Campaign Banner View (Pariksha Pe Charcha / MyGov style) */
+          <div className="relative z-10 py-5 animate-in fade-in zoom-in-95 duration-300">
+            <div className="relative w-full rounded-3xl overflow-hidden border border-white/20 shadow-2xl group bg-zinc-950/80">
+              <img
+                src={product.bannerUrl}
+                alt={product.name}
+                className="w-full h-auto max-h-[460px] object-cover sm:object-contain mx-auto transition-transform duration-700 group-hover:scale-[1.01]"
+              />
+
+              {/* Bottom Quick Action Strip Overlay */}
+              <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/95 via-black/70 to-transparent p-4 sm:p-6 flex flex-wrap items-center justify-between gap-4">
+                <div className="text-left">
+                  <div className="flex items-center gap-2">
+                    <h4 className="text-base sm:text-xl font-black text-white drop-shadow-md">
+                      {product.name}
+                    </h4>
+                    <span
+                      className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase text-zinc-950"
+                      style={{ backgroundColor: product.accentColor }}
+                    >
+                      Grade {product.grade} • {product.complianceScore}%
+                    </span>
+                  </div>
+                  <p className="text-xs sm:text-sm text-zinc-300 drop-shadow-sm line-clamp-1 mt-0.5">
+                    {product.subtitle}
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setActiveView('label')}
+                    className="px-4 py-2 rounded-xl bg-white/20 hover:bg-white/30 text-white font-bold text-xs backdrop-blur-md transition-all flex items-center gap-1.5 border border-white/20"
+                  >
+                    <Tag className="w-3.5 h-3.5" />
+                    <span>View Label Values</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => onExploreProduct && onExploreProduct(product.presetId)}
+                    className="px-5 py-2 rounded-xl bg-[#D5FF3F] hover:bg-[#cbf432] text-zinc-950 font-black text-xs transition-all active:scale-95 flex items-center gap-2 shadow-lg shadow-[#D5FF3F]/20"
+                  >
+                    <Eye className="w-4 h-4" />
+                    <span>Inspect Full Report</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        ) : (
+          /* Two Column Detailed Inspection / Label Board View */
+          <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 py-6 items-center">
           
           {/* Left Side: Visual Packaging Graphic & Quick Stats (5 Cols on Desktop) */}
           <div className="lg:col-span-5 flex flex-col items-center justify-center space-y-4">
@@ -429,6 +501,7 @@ export const Interactive3DCard: React.FC<Interactive3DCardProps> = ({ onExploreP
             </div>
           </div>
         </div>
+        )}
 
         {/* Bottom Carousel Navigation Bar */}
         <div className="relative z-10 flex items-center justify-between pt-4 border-t border-white/10 mt-2">
