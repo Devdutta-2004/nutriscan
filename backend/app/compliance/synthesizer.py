@@ -1,100 +1,226 @@
 """
-Audit Synthesizer: Integrates deterministic calculations, Big-8 verification,
-and document-grounded RAG statutory citations into a complete compliance audit report.
+Audit Synthesizer: Integrates deterministic calculations, Big-8+ verification,
+hybrid RAG statutory retrieval, and optional Gemini-powered compliance reasoning
+into a complete LMPC compliance audit report.
 """
 
 from typing import Dict, Any, List, Optional
 from datetime import datetime
+import logging
+
 from app.compliance.big8_checker import Big8Checker
 from app.compliance.math_engine import DeterministicMathEngine
-from app.rag.gazette_db import gazette_rag_engine
+from app.rag.gazette_db import lmpc_retrieval_engine
+from app.rag.gemini_engine import gemini_engine
+from app.config import Settings
+
+logger = logging.getLogger(__name__)
 
 class AuditSynthesizer:
-    """
-    Generates a structured compliance audit report linking every flagged defect
-    directly to statutory gazette citations with zero hallucination.
-    """
+    
+    @classmethod
+    def _enrich_with_rag(cls, checklist_item: Dict, product_category: str) -> tuple:
+        """Returns (enriched_item, retrieved_chunks) for a single checklist item."""
+        citation_key = checklist_item.get('citation_key') or checklist_item.get('id', '')
+        query = checklist_item.get('item', '') + ' ' + product_category
+        
+        chunks = []
+        gazette_citation = {}
+        
+        if citation_key:
+            # 1. Try direct lookup
+            direct_chunk = lmpc_retrieval_engine.get_by_id(citation_key)
+            if direct_chunk:
+                chunks.append(direct_chunk)
+            else:
+                # 2. Semantic search
+                search_results = lmpc_retrieval_engine.search(query, top_k=2)
+                chunks.extend(search_results)
+                if search_results:
+                    direct_chunk = search_results[0]
+            
+            if direct_chunk:
+                # 3. Fetch related rules
+                related_rules = lmpc_retrieval_engine.get_related_rules(citation_key)
+                # 4. Fetch penalty info
+                penalty_rule = lmpc_retrieval_engine.get_penalty_for_rule(citation_key)
+                
+                gazette_citation = {
+                    "rule": direct_chunk.get('title') or direct_chunk.get('id'),
+                    "gazette_ref": direct_chunk.get('gazette_ref', 'G.S.R. XXX(E)'),
+                    "verbatim_clause": direct_chunk.get('content', ''),
+                    "officer_guidance": direct_chunk.get('officer_guidance', ''),
+                    "penalty_rule": penalty_rule,
+                    "effective_date": direct_chunk.get('effective_date', ''),
+                    "amendment_refs": direct_chunk.get('amendments', []),
+                    "related_rules": related_rules
+                }
+        
+        enriched_item = dict(checklist_item)
+        if gazette_citation:
+            enriched_item['gazette_citation'] = gazette_citation
+            
+        return enriched_item, chunks
 
     @classmethod
-    def synthesize_report(
-        cls,
-        product_name: str,
-        label_data: Dict[str, Any],
-        tokens: Optional[List[Dict[str, Any]]] = None,
-        image_metadata: Optional[Dict[str, Any]] = None
-    ) -> Dict[str, Any]:
-        # 1. Run Big-8 statutory evaluation
+    def synthesize_report(cls, product_name: str, label_data: Dict[str, Any], tokens: Optional[List[Dict[str, Any]]] = None, image_metadata: Optional[Dict[str, Any]] = None, product_category: str = 'general') -> Dict[str, Any]:
+        """Synchronous deterministic-only synthesis (always works, no API key needed)."""
+        logger.info(f"Synthesizing sync report for {product_name}")
+        
         big8_result = Big8Checker.evaluate(label_data)
         
-        # 2. Enrich each checklist item with document-grounded statutory citations
         enriched_checklist = []
+        all_chunks = []
+        
+        for item in big8_result.get('checklist', []):
+            enriched_item, chunks = cls._enrich_with_rag(item, product_category)
+            enriched_checklist.append(enriched_item)
+            all_chunks.extend(chunks)
+            
+        return cls._compile_report(
+            product_name=product_name,
+            product_category=product_category,
+            big8_result=big8_result,
+            enriched_checklist=enriched_checklist,
+            all_chunks=all_chunks,
+            gemini_result=None,
+            tokens=tokens,
+            image_metadata=image_metadata
+        )
+
+    @classmethod
+    async def synthesize_report_with_llm(cls, product_name: str, label_data: Dict[str, Any], tokens: Optional[List[Dict[str, Any]]] = None, image_metadata: Optional[Dict[str, Any]] = None, product_category: str = 'general') -> Dict[str, Any]:
+        """Async synthesis with optional Gemini LLM reasoning."""
+        logger.info(f"Synthesizing async LLM report for {product_name}")
+        
+        # 1. Run Big-8+ Checker
+        big8_result = Big8Checker.evaluate(label_data)
+        
+        # 2. Enrich with RAG
+        enriched_checklist = []
+        all_chunks = []
+        
+        for item in big8_result.get('checklist', []):
+            enriched_item, chunks = cls._enrich_with_rag(item, product_category)
+            enriched_checklist.append(enriched_item)
+            all_chunks.extend(chunks)
+            
+        # Deduplicate chunks
+        unique_chunks = []
+        seen = set()
+        for chunk in all_chunks:
+            cid = chunk.get('id')
+            if cid and cid not in seen:
+                seen.add(cid)
+                unique_chunks.append(chunk)
+                
+        # 3. Gemini LLM Synthesis
+        gemini_result = None
+        try:
+            gemini_result = await gemini_engine.analyze_compliance(label_data, unique_chunks, product_name)
+        except Exception as e:
+            logger.error(f"Gemini analysis failed: {e}")
+            
+        if gemini_result and 'findings' in gemini_result:
+            findings_map = {f.get('id') or f.get('item_id'): f for f in gemini_result.get('findings', [])}
+            
+            for item in enriched_checklist:
+                item_id = item.get('id')
+                if item_id in findings_map:
+                    finding = findings_map[item_id]
+                    item['llm_reasoning'] = finding.get('llm_reasoning')
+                    item['verbatim_citation'] = finding.get('verbatim_citation')
+                    item['corrective_action'] = finding.get('corrective_action')
+                    
+                    # LLM can upgrade severity, not downgrade
+                    orig_status = item.get('status', 'OK')
+                    llm_status = finding.get('status', 'OK')
+                    
+                    if orig_status != 'VIOLATION' and llm_status == 'VIOLATION':
+                        item['status'] = 'VIOLATION'
+                    elif orig_status == 'OK' and llm_status == 'WARNING':
+                        item['status'] = 'WARNING'
+                        
+        return cls._compile_report(
+            product_name=product_name,
+            product_category=product_category,
+            big8_result=big8_result,
+            enriched_checklist=enriched_checklist,
+            all_chunks=all_chunks,
+            gemini_result=gemini_result,
+            tokens=tokens,
+            image_metadata=image_metadata
+        )
+
+    @classmethod
+    def _compile_report(cls, product_name, product_category, big8_result, enriched_checklist, all_chunks, gemini_result, tokens, image_metadata):
+        
+        violations_count = 0
+        warnings_count = 0
+        compliant_count = 0
+        
         violations_list = []
         warnings_list = []
-
-        for item in big8_result["checklist"]:
-            citation_key = item.get("citation_key")
-            gazette_chunk = None
-            if citation_key:
-                gazette_chunk = gazette_rag_engine.get_by_id(citation_key)
-
-            if not gazette_chunk:
-                # Retrieve via semantic RAG search
-                rag_results = gazette_rag_engine.search(f"{item['name']} {item['rule']} {item['reason']}", top_k=1)
-                if rag_results:
-                    gazette_chunk = rag_results[0]
-
-            enriched_item = {
-                **item,
-                "gazette_citation": {
-                    "rule": gazette_chunk["act_rule"] if gazette_chunk else item["rule"],
-                    "gazette_ref": gazette_chunk["gazette_ref"] if gazette_chunk else "LMPC Rules 2011",
-                    "verbatim_clause": gazette_chunk["verbatim_text"] if gazette_chunk else "Mandatory declaration under LMPC Rules.",
-                    "officer_guidance": gazette_chunk.get("officer_guidance", ""),
-                    "penalty_rule": gazette_chunk.get("penalty_rule", "Rule 32")
-                }
-            }
-            enriched_checklist.append(enriched_item)
-
-            if item["status"] == "VIOLATION":
-                violations_list.append(enriched_item)
-            elif item["status"] == "WARNING":
-                warnings_list.append(enriched_item)
-
-        # 3. Compile executive legal summary
-        total_violations = len(violations_list)
-        total_warnings = len(warnings_list)
-        score = big8_result["compliance_score"]
-
-        if total_violations == 0 and total_warnings == 0:
-            legal_status = "FULLY_COMPLIANT"
-            status_text = "Lawful for retail distribution across Indian Territory."
-        elif total_violations == 0 and total_warnings > 0:
-            legal_status = "COMPLIANT_WITH_WARNINGS"
-            status_text = "Distribution permissible with corrective advisory notices."
-        else:
+        
+        for item in enriched_checklist:
+            status = item.get('status', 'OK')
+            if status == 'VIOLATION':
+                violations_count += 1
+                violations_list.append(item)
+            elif status == 'WARNING':
+                warnings_count += 1
+                warnings_list.append(item)
+            else:
+                compliant_count += 1
+                
+        if violations_count > 0:
             legal_status = "NON_COMPLIANT_VIOLATION"
-            status_text = f"Notice of Non-Compliance warranted under Rule 32 of LMPC Rules, 2011 ({total_violations} statutory violations detected)."
-
+            status_text = "Violation of Rule 32 of LMPC Rules, 2011"
+        elif warnings_count > 0:
+            legal_status = "COMPLIANT_WITH_WARNINGS"
+            status_text = "Compliant but with warnings related to LMPC Rules"
+        else:
+            legal_status = "FULLY_COMPLIANT"
+            status_text = "Fully Compliant with Rule 32 of LMPC Rules, 2011"
+            
+        score = max(0, 100 - (violations_count * 20) - (warnings_count * 5))
+        
+        unique_rules_cited = len(set(c.get('id') for c in all_chunks if c.get('id')))
+        
+        # Safe config fallback
+        try:
+            corpus_version = Settings.CORPUS_VERSION
+        except AttributeError:
+            corpus_version = "v1.0"
+        
         report = {
             "audit_id": f"FP-{datetime.utcnow().strftime('%Y%m%d')}-{abs(hash(product_name)) % 10000:04d}",
             "audit_timestamp": datetime.utcnow().isoformat() + "Z",
             "product_name": product_name,
+            "product_category": product_category,
             "legal_status": legal_status,
             "status_text": status_text,
             "compliance_score": score,
+            "corpus_version": corpus_version,
+            "llm_enhanced": bool(gemini_result),
             "summary": {
-                "total_mandates_checked": 8,
-                "compliant_count": big8_result["summary"]["compliant"],
-                "warnings_count": total_warnings,
-                "violations_count": total_violations,
-                "is_lawful_for_sale": big8_result["summary"]["is_lawful_for_sale"]
+                "total_mandates_checked": len(enriched_checklist),
+                "compliant_count": compliant_count,
+                "warnings_count": warnings_count,
+                "violations_count": violations_count,
+                "is_lawful_for_sale": violations_count == 0
             },
             "checklist": enriched_checklist,
-            "usp_verification": big8_result["usp_verification"],
+            "usp_verification": big8_result.get("usp_verification", {}),
             "violations": violations_list,
             "warnings": warnings_list,
+            "gemini_analysis": gemini_result or None,
             "tokens": tokens or [],
-            "image_metadata": image_metadata or {"width": 800, "height": 600}
+            "image_metadata": image_metadata or {"width": 800, "height": 600},
+            "rag_retrieval_stats": {
+                "total_chunks_retrieved": len(all_chunks),
+                "unique_rules_cited": unique_rules_cited,
+                "corpus_version": corpus_version
+            }
         }
-
         return report

@@ -29,13 +29,17 @@ app.include_router(audit_router, prefix="/api")
 app.include_router(compliance_router, prefix="/api")
 app.include_router(gazette_router, prefix="/api")
 
+from app.rag.lmpc_corpus import LMPC_CORPUS, CORPUS_VERSION
+
+@app.get("/health")
 @app.get("/api/health")
 async def health_check():
     return {
         "status": "healthy",
         "service": "FairPack Compliance & RAG Engine",
-        "version": "1.0.0",
-        "rules_indexed": 9
+        "version": "2.0.0",
+        "corpus_version": CORPUS_VERSION,
+        "rules_indexed": len(LMPC_CORPUS)
     }
 
 if __name__ == "__main__":

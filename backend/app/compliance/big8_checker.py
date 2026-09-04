@@ -21,17 +21,21 @@ class Big8Checker:
         {"id": "usp", "name": "Unit Sale Price (USP)", "rule": "Rule 6(1)(s)"},
         {"id": "consumer_care", "name": "Consumer Care Details (Phone & Email)", "rule": "Rule 6(1)(h)"},
         {"id": "country_of_origin", "name": "Country of Origin & Importer", "rule": "Rule 6(1)(g)"},
+        {"id": "best_before", "name": "Best Before / Expiry Date", "rule": "Rule 6(1)(f)"},
+        {"id": "language", "name": "Language Compliance", "rule": "Rule 9(4)"},
+        {"id": "dual_mrp", "name": "Dual MRP Detection", "rule": "Rule 18(2A)"},
     ]
 
     @classmethod
     def evaluate(cls, label_data: Dict[str, Any]) -> Dict[str, Any]:
         """
-        Runs comprehensive Big-8 checks on extracted or declared label attributes.
+        Runs comprehensive checks on extracted or declared label attributes.
         """
         results: List[Dict[str, Any]] = []
         violations_count = 0
         warnings_count = 0
         compliant_count = 0
+        critical_count = 0
 
         # 1. Manufacturer / Importer Address (Rule 6(1)(a))
         mfg_val = label_data.get("manufacturer_address", "")
@@ -48,22 +52,36 @@ class Big8Checker:
                     "status": "VIOLATION",
                     "extracted_text": mfg_val or "Foreign Manufacturer only",
                     "reason": f"Imported commodity from '{country}' requires name and complete postal address of the Indian Importer.",
-                    "severity": "HIGH",
+                    "severity": "CRITICAL",
                     "citation_key": "rule_6_1_a"
                 })
+                critical_count += 1
                 violations_count += 1
             else:
-                results.append({
-                    "mandate_id": "mfg_address",
-                    "name": "Manufacturer & Importer Address",
-                    "rule": "Rule 6(1)(a)",
-                    "status": "COMPLIANT",
-                    "extracted_text": f"Mfg: {mfg_val} | Importer: {importer_val}",
-                    "reason": "Both foreign manufacturer and registered Indian importer postal details declared.",
-                    "severity": "LOW",
-                    "citation_key": "rule_6_1_a"
-                })
-                compliant_count += 1
+                if not re.search(r'\d{6}', importer_val):
+                    results.append({
+                        "mandate_id": "mfg_address",
+                        "name": "Manufacturer & Importer Address",
+                        "rule": "Rule 6(1)(a)",
+                        "status": "WARNING",
+                        "extracted_text": f"Mfg: {mfg_val} | Importer: {importer_val}",
+                        "reason": "Importer address is present but missing a 6-digit PIN code (Rule 10 requirement).",
+                        "severity": "MEDIUM",
+                        "citation_key": "rule_6_1_a"
+                    })
+                    warnings_count += 1
+                else:
+                    results.append({
+                        "mandate_id": "mfg_address",
+                        "name": "Manufacturer & Importer Address",
+                        "rule": "Rule 6(1)(a)",
+                        "status": "COMPLIANT",
+                        "extracted_text": f"Mfg: {mfg_val} | Importer: {importer_val}",
+                        "reason": "Both foreign manufacturer and registered Indian importer postal details declared.",
+                        "severity": "LOW",
+                        "citation_key": "rule_6_1_a"
+                    })
+                    compliant_count += 1
         else:
             if not mfg_val or len(mfg_val.strip()) < 8:
                 results.append({
@@ -78,17 +96,30 @@ class Big8Checker:
                 })
                 violations_count += 1
             else:
-                results.append({
-                    "mandate_id": "mfg_address",
-                    "name": "Manufacturer Address",
-                    "rule": "Rule 6(1)(a)",
-                    "status": "COMPLIANT",
-                    "extracted_text": mfg_val,
-                    "reason": "Manufacturer postal address properly declared.",
-                    "severity": "LOW",
-                    "citation_key": "rule_6_1_a"
-                })
-                compliant_count += 1
+                if not re.search(r'\d{6}', mfg_val):
+                    results.append({
+                        "mandate_id": "mfg_address",
+                        "name": "Manufacturer Address",
+                        "rule": "Rule 6(1)(a)",
+                        "status": "WARNING",
+                        "extracted_text": mfg_val,
+                        "reason": "Manufacturer address is present but missing a 6-digit PIN code (Rule 10 requirement).",
+                        "severity": "MEDIUM",
+                        "citation_key": "rule_6_1_a"
+                    })
+                    warnings_count += 1
+                else:
+                    results.append({
+                        "mandate_id": "mfg_address",
+                        "name": "Manufacturer Address",
+                        "rule": "Rule 6(1)(a)",
+                        "status": "COMPLIANT",
+                        "extracted_text": mfg_val,
+                        "reason": "Manufacturer postal address properly declared.",
+                        "severity": "LOW",
+                        "citation_key": "rule_6_1_a"
+                    })
+                    compliant_count += 1
 
         # 2. Generic Name (Rule 6(1)(b))
         gen_name = label_data.get("generic_name", "")
@@ -120,6 +151,10 @@ class Big8Checker:
         # 3. Net Quantity (Rule 6(1)(c))
         net_qty = label_data.get("net_quantity", "")
         parsed_qty = DeterministicMathEngine.parse_quantity(net_qty)
+        
+        prohibited_qualifiers = ['approx', 'approximately', 'minimum', 'min.', 'when packed', 'average']
+        has_prohibited = any(q in str(net_qty).lower() for q in prohibited_qualifiers)
+
         if not parsed_qty:
             results.append({
                 "mandate_id": "net_quantity",
@@ -132,6 +167,18 @@ class Big8Checker:
                 "citation_key": "rule_6_1_c"
             })
             violations_count += 1
+        elif has_prohibited:
+            results.append({
+                "mandate_id": "net_quantity",
+                "name": "Net Quantity",
+                "rule": "Rule 6(1)(c)",
+                "status": "WARNING",
+                "extracted_text": net_qty,
+                "reason": "Net quantity contains prohibited qualifiers (approx, min, when packed, etc.) as per Rule 12(6).",
+                "severity": "MEDIUM",
+                "citation_key": "rule_6_1_c"
+            })
+            warnings_count += 1
         else:
             results.append({
                 "mandate_id": "net_quantity",
@@ -161,33 +208,46 @@ class Big8Checker:
             })
             violations_count += 1
         else:
-            # Check for tax inclusion declaration
             raw_mrp_str = str(mrp).lower()
-            tax_declared = "incl" in raw_mrp_str or "taxes" in raw_mrp_str or label_data.get("mrp_inclusive_taxes", True)
-            if not tax_declared:
+            if "exclusive of taxes" in raw_mrp_str or "excl" in raw_mrp_str:
                 results.append({
                     "mandate_id": "mrp",
                     "name": "Maximum Retail Price (MRP)",
                     "rule": "Rule 6(1)(d)",
-                    "status": "WARNING",
+                    "status": "VIOLATION",
                     "extracted_text": mrp,
-                    "reason": "Mandatory statement 'inclusive of all taxes' or 'incl. of all taxes' is ambiguous.",
-                    "severity": "MEDIUM",
+                    "reason": "MRP explicitly states 'exclusive of taxes', which violates the requirement to be inclusive of all taxes.",
+                    "severity": "HIGH",
                     "citation_key": "rule_6_1_d"
                 })
-                warnings_count += 1
+                violations_count += 1
             else:
-                results.append({
-                    "mandate_id": "mrp",
-                    "name": "Maximum Retail Price (MRP)",
-                    "rule": "Rule 6(1)(d)",
-                    "status": "COMPLIANT",
-                    "extracted_text": f"₹{parsed_mrp:.2f} (inclusive of all taxes)",
-                    "reason": "MRP with mandatory tax inclusion declared.",
-                    "severity": "LOW",
-                    "citation_key": "rule_6_1_d"
-                })
-                compliant_count += 1
+                # Check for tax inclusion declaration
+                tax_declared = "incl" in raw_mrp_str or "taxes" in raw_mrp_str or label_data.get("mrp_inclusive_taxes", True)
+                if not tax_declared:
+                    results.append({
+                        "mandate_id": "mrp",
+                        "name": "Maximum Retail Price (MRP)",
+                        "rule": "Rule 6(1)(d)",
+                        "status": "WARNING",
+                        "extracted_text": mrp,
+                        "reason": "Mandatory statement 'inclusive of all taxes' or 'incl. of all taxes' is ambiguous.",
+                        "severity": "MEDIUM",
+                        "citation_key": "rule_6_1_d"
+                    })
+                    warnings_count += 1
+                else:
+                    results.append({
+                        "mandate_id": "mrp",
+                        "name": "Maximum Retail Price (MRP)",
+                        "rule": "Rule 6(1)(d)",
+                        "status": "COMPLIANT",
+                        "extracted_text": f"₹{parsed_mrp:.2f} (inclusive of all taxes)",
+                        "reason": "MRP with mandatory tax inclusion declared.",
+                        "severity": "LOW",
+                        "citation_key": "rule_6_1_d"
+                    })
+                    compliant_count += 1
 
         # 5. Date of Manufacture / Packing (Rule 6(1)(e))
         mfg_date = label_data.get("mfg_date", "")
@@ -342,6 +402,116 @@ class Big8Checker:
             })
             compliant_count += 1
 
+        # 9. Best Before / Expiry Date (Rule 6(1)(f))
+        expiry = label_data.get("expiry_date") or label_data.get("best_before")
+        product_cat = label_data.get("product_category", "general").lower()
+        perishable_keywords = ['food', 'perishable', 'beverage', 'edible', 'dairy', 'meat', 'bakery']
+        is_perishable = any(kw in product_cat for kw in perishable_keywords)
+
+        if expiry:
+            results.append({
+                "mandate_id": "best_before",
+                "name": "Best Before / Expiry Date",
+                "rule": "Rule 6(1)(f)",
+                "status": "COMPLIANT",
+                "extracted_text": expiry,
+                "reason": "Best before or expiry date is declared.",
+                "severity": "LOW",
+                "citation_key": "rule_6_1_f"
+            })
+            compliant_count += 1
+        else:
+            if is_perishable:
+                results.append({
+                    "mandate_id": "best_before",
+                    "name": "Best Before / Expiry Date",
+                    "rule": "Rule 6(1)(f)",
+                    "status": "WARNING",
+                    "extracted_text": "Missing",
+                    "reason": "Product category suggests perishable commodity, but no expiry/best before date found.",
+                    "severity": "MEDIUM",
+                    "citation_key": "rule_6_1_f"
+                })
+                warnings_count += 1
+            else:
+                results.append({
+                    "mandate_id": "best_before",
+                    "name": "Best Before / Expiry Date",
+                    "rule": "Rule 6(1)(f)",
+                    "status": "COMPLIANT",
+                    "extracted_text": "Not required",
+                    "reason": "Not a perishable commodity; expiry date may not be strictly required.",
+                    "severity": "LOW",
+                    "citation_key": "rule_6_1_f"
+                })
+                compliant_count += 1
+
+        # 10. Language Compliance (Rule 9(4))
+        lang_detected = str(label_data.get("language_detected", "")).lower()
+        if "english" in lang_detected or "hindi" in lang_detected:
+            results.append({
+                "mandate_id": "language",
+                "name": "Language Compliance",
+                "rule": "Rule 9(4)",
+                "status": "COMPLIANT",
+                "extracted_text": lang_detected,
+                "reason": "Declarations are in English or Hindi.",
+                "severity": "LOW",
+                "citation_key": "rule_9_4"
+            })
+            compliant_count += 1
+        elif not lang_detected:
+            results.append({
+                "mandate_id": "language",
+                "name": "Language Compliance",
+                "rule": "Rule 9(4)",
+                "status": "WARNING",
+                "extracted_text": "Unknown",
+                "reason": "Language information unavailable; could not be verified from OCR alone.",
+                "severity": "MEDIUM",
+                "citation_key": "rule_9_4"
+            })
+            warnings_count += 1
+        else:
+            results.append({
+                "mandate_id": "language",
+                "name": "Language Compliance",
+                "rule": "Rule 9(4)",
+                "status": "VIOLATION",
+                "extracted_text": lang_detected,
+                "reason": "Declarations appear to be entirely in a language other than English or Hindi.",
+                "severity": "HIGH",
+                "citation_key": "rule_9_4"
+            })
+            violations_count += 1
+
+        # 11. Dual MRP Detection (Rule 18(2A))
+        mrp_values = label_data.get("mrp_values", [])
+        if isinstance(mrp_values, list) and len(set(mrp_values)) > 1:
+            results.append({
+                "mandate_id": "dual_mrp",
+                "name": "Dual MRP Detection",
+                "rule": "Rule 18(2A)",
+                "status": "VIOLATION",
+                "extracted_text": ", ".join(map(str, mrp_values)),
+                "reason": "Multiple distinct MRP values detected on the same package (Dual MRP).",
+                "severity": "HIGH",
+                "citation_key": "rule_18_2a"
+            })
+            violations_count += 1
+        else:
+            results.append({
+                "mandate_id": "dual_mrp",
+                "name": "Dual MRP Detection",
+                "rule": "Rule 18(2A)",
+                "status": "COMPLIANT",
+                "extracted_text": str(mrp_values) if mrp_values else mrp,
+                "reason": "No dual MRP detected.",
+                "severity": "LOW",
+                "citation_key": "rule_18_2a"
+            })
+            compliant_count += 1
+
         # Calculate overall compliance score (0 - 100%)
         # Violations subtract 12.5%, warnings subtract 5%
         raw_score = 100 - (violations_count * 12.5) - (warnings_count * 5.0)
@@ -355,6 +525,7 @@ class Big8Checker:
                 "compliant": compliant_count,
                 "warnings": warnings_count,
                 "violations": violations_count,
+                "critical": critical_count,
                 "is_lawful_for_sale": violations_count == 0
             },
             "usp_verification": usp_verification
