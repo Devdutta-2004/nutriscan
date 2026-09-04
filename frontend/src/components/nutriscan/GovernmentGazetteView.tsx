@@ -2,9 +2,11 @@ import React, { useState, useMemo } from 'react';
 import { 
   Scale, BookOpen, ShieldCheck, FileText, ExternalLink, Search, 
   Filter, CheckCircle2, AlertTriangle, Download, Printer, Award,
-  Landmark, ArrowRight, ShieldAlert, Sparkles, ChevronDown, ChevronUp, Copy, Check
+  Landmark, ArrowRight, ShieldAlert, Sparkles, ChevronDown, ChevronUp, Copy, Check,
+  Languages
 } from 'lucide-react';
 import { STATUTORY_RULES, StatutoryRule } from '../../data/gazetteRules';
+import { HINDI_STATUTORY_MAP } from '../../data/hindiRulesMap';
 
 interface GovernmentGazetteViewProps {
   onBackToHome?: () => void;
@@ -15,6 +17,7 @@ export const GovernmentGazetteView: React.FC<GovernmentGazetteViewProps> = ({
   onBackToHome,
   onOpenNotice,
 }) => {
+  const [language, setLanguage] = useState<'en' | 'hi'>('en');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [expandedRuleId, setExpandedRuleId] = useState<string | null>('rule_6_1_a');
@@ -326,42 +329,244 @@ export const GovernmentGazetteView: React.FC<GovernmentGazetteViewProps> = ({
             </div>
           </div>
         </div>
+
+        {/* Consumer Affairs Official Live Repository Directory */}
+        <div className="bg-white rounded-3xl p-5 sm:p-6 border border-zinc-200 shadow-sm space-y-3">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-zinc-100">
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
+                <h4 className="text-sm font-black text-zinc-900 tracking-tight">
+                  Department of Consumer Affairs • Live Official Document Directory
+                </h4>
+              </div>
+              <p className="text-xs text-zinc-500">
+                Direct verified publications from <a href="https://consumeraffairs.gov.in/pages/legal-metrology-act" target="_blank" rel="noreferrer" className="text-indigo-600 font-bold hover:underline">consumeraffairs.gov.in/pages/legal-metrology-act</a>
+              </p>
+            </div>
+            <a
+              href="https://consumeraffairs.gov.in/pages/legal-metrology-act"
+              target="_blank"
+              rel="noreferrer"
+              className="px-3 py-1.5 rounded-xl bg-zinc-100 hover:bg-zinc-200 text-xs font-bold text-zinc-700 flex items-center gap-1.5 w-fit"
+            >
+              <span>Visit Official Site</span>
+              <ExternalLink className="w-3.5 h-3.5" />
+            </a>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 text-xs">
+            <a
+              href="http://consumeraffairs.gov.in/public/upload/files/8_1732871406.pdf"
+              target="_blank"
+              rel="noreferrer"
+              className="p-3 rounded-2xl bg-zinc-50 hover:bg-indigo-50/60 border border-zinc-200 hover:border-indigo-300 transition-all flex flex-col justify-between space-y-2 group"
+            >
+              <div className="space-y-1">
+                <span className="px-2 py-0.5 rounded-md bg-indigo-100 text-indigo-800 text-[10px] font-bold font-mono">
+                  G.S.R. 202(E) Base Rules
+                </span>
+                <p className="font-extrabold text-zinc-900 group-hover:text-indigo-900">
+                  The Legal Metrology (Packaged Commodities) Rules, 2011
+                </p>
+                <p className="text-[11px] text-zinc-500 font-hindi">
+                  विधिक माप विज्ञान (पैकेज में रखी वस्तुएं) नियम, 2011
+                </p>
+              </div>
+              <div className="flex items-center justify-between text-[11px] text-indigo-600 font-bold pt-1 border-t border-zinc-200/50">
+                <span>43 Pages • PDF</span>
+                <Download className="w-3.5 h-3.5" />
+              </div>
+            </a>
+
+            <a
+              href="http://consumeraffairs.gov.in/public/upload/files/Jan%20Vishwas%20(Amendment%20of%20Provisions)%20Act,%202023%20(18%20of%202023)_1732708241.pdf"
+              target="_blank"
+              rel="noreferrer"
+              className="p-3 rounded-2xl bg-zinc-50 hover:bg-rose-50/60 border border-zinc-200 hover:border-rose-300 transition-all flex flex-col justify-between space-y-2 group"
+            >
+              <div className="space-y-1">
+                <span className="px-2 py-0.5 rounded-md bg-rose-100 text-rose-800 text-[10px] font-bold font-mono">
+                  Act 18 of 2023
+                </span>
+                <p className="font-extrabold text-zinc-900 group-hover:text-rose-900">
+                  Jan Vishwas (Amendment of Provisions) Act, 2023
+                </p>
+                <p className="text-[11px] text-zinc-500 font-hindi">
+                  जन विश्वास (उपबंधों का संशोधन) अधिनियम, 2023
+                </p>
+              </div>
+              <div className="flex items-center justify-between text-[11px] text-rose-600 font-bold pt-1 border-t border-zinc-200/50">
+                <span>Penalty Decriminalization</span>
+                <Download className="w-3.5 h-3.5" />
+              </div>
+            </a>
+
+            <a
+              href="https://consumeraffairs.gov.in/public/upload/files/230946_1732871433.pdf"
+              target="_blank"
+              rel="noreferrer"
+              className="p-3 rounded-2xl bg-zinc-50 hover:bg-purple-50/60 border border-zinc-200 hover:border-purple-300 transition-all flex flex-col justify-between space-y-2 group"
+            >
+              <div className="space-y-1">
+                <span className="px-2 py-0.5 rounded-md bg-purple-100 text-purple-800 text-[10px] font-bold font-mono">
+                  G.S.R. 779(E) USP Mandate
+                </span>
+                <p className="font-extrabold text-zinc-900 group-hover:text-purple-900">
+                  Unit Sale Price (USP) Statutory Amendment Rules, 2021
+                </p>
+                <p className="text-[11px] text-zinc-500 font-hindi">
+                  इकाई विक्रय मूल्य (यूएसपी) अनिवार्य नियम
+                </p>
+              </div>
+              <div className="flex items-center justify-between text-[11px] text-purple-600 font-bold pt-1 border-t border-zinc-200/50">
+                <span>Rule 6(1)(s) &amp; 6(11)</span>
+                <Download className="w-3.5 h-3.5" />
+              </div>
+            </a>
+
+            <a
+              href="http://consumeraffairs.gov.in/public/upload/files/8(xii)_0_1732871346.pdf"
+              target="_blank"
+              rel="noreferrer"
+              className="p-3 rounded-2xl bg-zinc-50 hover:bg-amber-50/60 border border-zinc-200 hover:border-amber-300 transition-all flex flex-col justify-between space-y-2 group"
+            >
+              <div className="space-y-1">
+                <span className="px-2 py-0.5 rounded-md bg-amber-100 text-amber-800 text-[10px] font-bold font-mono">
+                  G.S.R. 629(E) Dual MRP Ban
+                </span>
+                <p className="font-extrabold text-zinc-900 group-hover:text-amber-900">
+                  Dual MRP Ban &amp; Table-I Font Heights Amendment, 2017
+                </p>
+                <p className="text-[11px] text-zinc-500 font-hindi">
+                  दोहरी एमआरपी का पूर्ण प्रतिषेध
+                </p>
+              </div>
+              <div className="flex items-center justify-between text-[11px] text-amber-700 font-bold pt-1 border-t border-zinc-200/50">
+                <span>Rule 18(2A) &amp; E-Commerce</span>
+                <Download className="w-3.5 h-3.5" />
+              </div>
+            </a>
+
+            <a
+              href="http://consumeraffairs.gov.in/public/upload/files/Notification%20-%20%20Legal%20Metrology%20(QR%20Code)_1732871487.pdf"
+              target="_blank"
+              rel="noreferrer"
+              className="p-3 rounded-2xl bg-zinc-50 hover:bg-emerald-50/60 border border-zinc-200 hover:border-emerald-300 transition-all flex flex-col justify-between space-y-2 group"
+            >
+              <div className="space-y-1">
+                <span className="px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800 text-[10px] font-bold font-mono">
+                  G.S.R. 524(E) QR Code
+                </span>
+                <p className="font-extrabold text-zinc-900 group-hover:text-emerald-900">
+                  Electronics QR Code Declarations Amendment Rules, 2022
+                </p>
+                <p className="text-[11px] text-zinc-500 font-hindi">
+                  इलेक्ट्रॉनिक उत्पादों पर क्यूआर कोड का उपयोग
+                </p>
+              </div>
+              <div className="flex items-center justify-between text-[11px] text-emerald-700 font-bold pt-1 border-t border-zinc-200/50">
+                <span>Digital Declarations</span>
+                <Download className="w-3.5 h-3.5" />
+              </div>
+            </a>
+
+            <a
+              href="https://consumeraffairs.gov.in/public/upload/files/2026.02.13%20PCR%201st%20COO%20Filter%20on%20e-commerce%20websites_1771231030.pdf"
+              target="_blank"
+              rel="noreferrer"
+              className="p-3 rounded-2xl bg-zinc-50 hover:bg-blue-50/60 border border-zinc-200 hover:border-blue-300 transition-all flex flex-col justify-between space-y-2 group"
+            >
+              <div className="space-y-1">
+                <span className="px-2 py-0.5 rounded-md bg-blue-100 text-blue-800 text-[10px] font-bold font-mono">
+                  Latest 2026 Reform
+                </span>
+                <p className="font-extrabold text-zinc-900 group-hover:text-blue-900">
+                  Country of Origin (COO) Filter on E-Commerce Platforms, 2026
+                </p>
+                <p className="text-[11px] text-zinc-500 font-hindi">
+                  ई-कॉमर्स पर मूल देश फिल्टर अनिवार्यता
+                </p>
+              </div>
+              <div className="flex items-center justify-between text-[11px] text-blue-700 font-bold pt-1 border-t border-zinc-200/50">
+                <span>E-Commerce Rules</span>
+                <Download className="w-3.5 h-3.5" />
+              </div>
+            </a>
+          </div>
+        </div>
       </div>
 
       {/* 3. Interactive Gazette Rules & Verbatim Text Explorer */}
       <div className="bg-white rounded-[32px] p-6 sm:p-8 border border-zinc-200/90 shadow-sm space-y-5">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-zinc-200">
           <div>
-            <h3 className="text-base font-black text-zinc-900 tracking-tight">
-              Interactive Gazette Statutory Repository ({filteredRules.length} Clauses)
-            </h3>
+            <div className="flex items-center gap-2">
+              <h3 className="text-base font-black text-zinc-900 tracking-tight">
+                {language === 'hi' ? 'इंटरएक्टिव राजपत्र विधिक भंडार' : 'Interactive Gazette Statutory Repository'} ({filteredRules.length} Clauses)
+              </h3>
+              <span className="px-2 py-0.5 rounded-full bg-zinc-100 text-zinc-600 text-[10px] font-bold font-mono">
+                {language === 'hi' ? 'सा.का.नि. 202(अ)' : 'G.S.R. 202(E)'}
+              </span>
+            </div>
             <p className="text-xs text-zinc-500 mt-0.5">
-              Browse verbatim official gazette language, officer enforcement interpretations, and penalty provisions
+              {language === 'hi'
+                ? 'मूल हिंदी राजपत्र के अधिकृत प्रावधान, अधिकारी प्रवर्तन निर्देश और दंड संहिता'
+                : 'Browse verbatim official gazette language, officer enforcement interpretations, and penalty provisions'}
             </p>
           </div>
 
-          {/* Search Input */}
-          <div className="relative w-full sm:w-72">
-            <Search className="w-4 h-4 text-zinc-400 absolute left-3 top-1/2 -translate-y-1/2" />
-            <input
-              type="text"
-              placeholder="Search rule (e.g., USP, PIN, MRP)..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-3 py-2 rounded-xl bg-zinc-50 border border-zinc-200 text-xs font-medium placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-[#D5FF3F] focus:border-zinc-400"
-            />
+          <div className="flex items-center gap-2 flex-wrap">
+            {/* Language Toggle Pill */}
+            <div className="flex items-center gap-1 bg-zinc-100 p-1 rounded-2xl border border-zinc-200 text-xs font-bold shrink-0">
+              <button
+                type="button"
+                onClick={() => setLanguage('en')}
+                className={`px-3 py-1 rounded-xl text-xs font-bold transition-all ${
+                  language === 'en'
+                    ? 'bg-[#0E1118] text-[#D5FF3F] shadow-xs'
+                    : 'text-zinc-600 hover:text-zinc-950'
+                }`}
+              >
+                English
+              </button>
+              <button
+                type="button"
+                onClick={() => setLanguage('hi')}
+                className={`px-3 py-1 rounded-xl text-xs font-bold transition-all flex items-center gap-1 ${
+                  language === 'hi'
+                    ? 'bg-[#0E1118] text-[#D5FF3F] shadow-xs'
+                    : 'text-zinc-600 hover:text-zinc-950'
+                }`}
+              >
+                <span>हिन्दी</span>
+                <span className="text-[9px] px-1 rounded bg-[#D5FF3F]/30 text-zinc-950 font-bold">अ</span>
+              </button>
+            </div>
+
+            {/* Search Input */}
+            <div className="relative w-full sm:w-60">
+              <Search className="w-4 h-4 text-zinc-400 absolute left-3 top-1/2 -translate-y-1/2" />
+              <input
+                type="text"
+                placeholder={language === 'hi' ? 'खोजें (जैसे: यूएसपी, एमआरपी, पिन)...' : 'Search rule (e.g., USP, PIN, MRP)...'}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-9 pr-3 py-1.5 rounded-xl bg-zinc-50 border border-zinc-200 text-xs font-medium placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-[#D5FF3F] focus:border-zinc-400"
+              />
+            </div>
           </div>
         </div>
 
         {/* Filter Category Pills */}
         <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs font-bold no-scrollbar">
           {[
-            { id: 'all', label: 'All Statutory Rules' },
-            { id: 'declaration', label: 'Mandatory Declarations (Rule 6)' },
-            { id: 'quantity', label: 'Net Quantity & Units' },
-            { id: 'typography', label: 'Display Panel (PDP) & Fonts' },
-            { id: 'pricing', label: 'Pricing & Dual MRP' },
-            { id: 'penalty', label: 'Penalties & Legal Sanctions' },
+            { id: 'all', label: language === 'hi' ? 'सभी विधिक नियम' : 'All Statutory Rules' },
+            { id: 'declaration', label: language === 'hi' ? 'अनिवार्य घोषणाएं (नियम 6)' : 'Mandatory Declarations (Rule 6)' },
+            { id: 'quantity', label: language === 'hi' ? 'शुद्ध मात्रा एवं मात्रक' : 'Net Quantity & Units' },
+            { id: 'typography', label: language === 'hi' ? 'पैनल (PDP) एवं अक्षर ऊंचाई' : 'Display Panel (PDP) & Fonts' },
+            { id: 'pricing', label: language === 'hi' ? 'मूल्य एवं दोहरी एमआरपी' : 'Pricing & Dual MRP' },
+            { id: 'penalty', label: language === 'hi' ? 'शास्ति एवं विधिक दंड' : 'Penalties & Legal Sanctions' },
           ].map((cat) => (
             <button
               key={cat.id}
@@ -382,6 +587,9 @@ export const GovernmentGazetteView: React.FC<GovernmentGazetteViewProps> = ({
           {filteredRules.map((rule) => {
             const isExpanded = expandedRuleId === rule.id;
             const isCopied = copiedRuleId === rule.id;
+            const hindiEntry = HINDI_STATUTORY_MAP[rule.id];
+            const displayTitle = language === 'hi' && hindiEntry ? hindiEntry.title_hindi : rule.title;
+            const displayVerbatim = language === 'hi' && hindiEntry ? hindiEntry.verbatim_hindi : rule.verbatim_text;
 
             return (
               <div
@@ -402,8 +610,13 @@ export const GovernmentGazetteView: React.FC<GovernmentGazetteViewProps> = ({
                     <div className="min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
                         <h4 className="font-extrabold text-xs sm:text-sm text-zinc-900 truncate">
-                          {rule.title}
+                          {displayTitle}
                         </h4>
+                        {language === 'hi' && hindiEntry && (
+                          <span className="px-1.5 py-0.5 rounded bg-orange-100 text-orange-900 text-[9px] font-bold">
+                            हिन्दी पाठ
+                          </span>
+                        )}
                         <span className="px-2 py-0.5 rounded-md bg-zinc-100 text-zinc-600 font-mono text-[10px] font-bold">
                           {rule.gazette_ref}
                         </span>
@@ -439,11 +652,18 @@ export const GovernmentGazetteView: React.FC<GovernmentGazetteViewProps> = ({
                     
                     {/* Verbatim Gazette Text */}
                     <div className="space-y-1">
-                      <span className="text-[10px] font-extrabold uppercase tracking-wider text-zinc-400 font-mono">
-                        Official Gazette Verbatim Clause
-                      </span>
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] font-extrabold uppercase tracking-wider text-zinc-400 font-mono">
+                          {language === 'hi' ? 'राजपत्र का अधिकृत मूल पाठ (Verbatim Gazette Clause)' : 'Official Gazette Verbatim Clause'}
+                        </span>
+                        {language === 'hi' && hindiEntry && (
+                          <span className="text-[10px] text-orange-700 font-semibold">
+                            अधिसूचना सा.का.नि. 202(अ) से प्रमाणित
+                          </span>
+                        )}
+                      </div>
                       <div className="p-3.5 rounded-xl bg-white border border-zinc-200 text-zinc-800 font-serif leading-relaxed text-xs italic shadow-inner">
-                        "{rule.verbatim_text}"
+                        "{displayVerbatim}"
                       </div>
                     </div>
 
@@ -451,7 +671,7 @@ export const GovernmentGazetteView: React.FC<GovernmentGazetteViewProps> = ({
                     {rule.officer_guidance && (
                       <div className="p-3 rounded-xl bg-indigo-50/70 border border-indigo-100 text-indigo-950 space-y-1">
                         <strong className="text-[11px] font-extrabold block text-indigo-900">
-                          Legal Metrology Enforcement Directive:
+                          {language === 'hi' ? 'विधिक माप विज्ञान प्रवर्तन निर्देश (Inspection Directive):' : 'Legal Metrology Enforcement Directive:'}
                         </strong>
                         <p className="text-xs text-indigo-900 leading-relaxed">
                           {rule.officer_guidance}
@@ -462,7 +682,9 @@ export const GovernmentGazetteView: React.FC<GovernmentGazetteViewProps> = ({
                     {/* Meta Row: Penalty & Effective Date */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-2 border-t border-zinc-200/60 text-xs">
                       <div className="flex items-center justify-between p-2 rounded-lg bg-rose-50 border border-rose-200/60 text-rose-900">
-                        <span className="font-semibold text-[11px]">Penalty Provision:</span>
+                        <span className="font-semibold text-[11px]">
+                          {language === 'hi' ? 'लागू शास्ति एवं दंड:' : 'Penalty Provision:'}
+                        </span>
                         <span className="font-bold font-mono text-[11px]">
                           {typeof rule.penalty_rule === 'object'
                             ? (rule.penalty_rule as any)?.title || 'Rule 32'
