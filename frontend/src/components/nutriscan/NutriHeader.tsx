@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Leaf, Camera, Image as ImageIcon, Sparkles, Smartphone, Monitor, Menu, X, FileText, ChevronRight } from 'lucide-react';
+import { JagoGrahakJagoLogo, NationalConsumerHelplineBadge } from '../common/GovtEmblems';
 
 interface NutriHeaderProps {
   activeTab: string;
@@ -32,21 +33,29 @@ export const NutriHeader: React.FC<NutriHeaderProps> = ({
   return (
     <header className="relative pt-2.5 pb-2.5 border-b border-zinc-200/60 sm:border-none z-30">
       <div className="flex items-center justify-between">
-        {/* Brand: NutriScan with leaf logo */}
-        <div 
-          onClick={() => onSelectTab('home')}
-          className="flex items-center gap-2 sm:gap-2.5 cursor-pointer active:scale-95 transition-transform"
-        >
-          <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-[#0E1118] flex items-center justify-center shadow-md shrink-0">
-            <Leaf className="w-4.5 h-4.5 sm:w-5 sm:h-5 text-[#D5FF3F] fill-[#D5FF3F]" />
+        {/* Brand: NutriScan with leaf logo + Jago Grahak Jago Emblem */}
+        <div className="flex items-center gap-3">
+          <div 
+            onClick={() => onSelectTab('home')}
+            className="flex items-center gap-2 sm:gap-2.5 cursor-pointer active:scale-95 transition-transform"
+          >
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-[#0E1118] flex items-center justify-center shadow-md shrink-0">
+              <Leaf className="w-4.5 h-4.5 sm:w-5 sm:h-5 text-[#D5FF3F] fill-[#D5FF3F]" />
+            </div>
+            <div className="flex items-center text-xl sm:text-2xl font-black tracking-tight text-[#0E1118]">
+              <span>Nutri</span>
+              <span className="text-[#FF2A85]">Scan</span>
+            </div>
+            <span className="hidden xs:inline-block sm:inline-block bg-[#D5FF3F] text-zinc-950 text-[9px] font-black px-1.5 py-0.5 rounded-md uppercase tracking-wider ml-1">
+              PWA
+            </span>
           </div>
-          <div className="flex items-center text-xl sm:text-2xl font-black tracking-tight text-[#0E1118]">
-            <span>Nutri</span>
-            <span className="text-[#FF2A85]">Scan</span>
+
+          {/* Official Jago Grahak Jago Emblem beside brand on larger screens */}
+          <div className="h-6 w-px bg-zinc-300 hidden xl:block" />
+          <div className="hidden xl:flex items-center">
+            <JagoGrahakJagoLogo size={30} />
           </div>
-          <span className="hidden xs:inline-block sm:inline-block bg-[#D5FF3F] text-zinc-950 text-[9px] font-black px-1.5 py-0.5 rounded-md uppercase tracking-wider ml-1">
-            PWA
-          </span>
         </div>
 
         {/* Desktop Navigation Tabs (visible on md/lg screens) */}

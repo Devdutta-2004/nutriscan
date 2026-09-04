@@ -18,7 +18,7 @@ import { ProfileView } from './components/nutriscan/ProfileView';
 import { PromotionalShowcase } from './components/nutriscan/PromotionalShowcase';
 import { MobileQuickBar } from './components/nutriscan/MobileQuickBar';
 import { PWAInstallBanner } from './components/nutriscan/PWAInstallBanner';
-import { SIHProblemBanner } from './components/nutriscan/SIHProblemBanner';
+import { GovtTrustBanner } from './components/common/GovtEmblems';
 import { GovernmentGazetteView } from './components/nutriscan/GovernmentGazetteView';
 import { ErrorBoundary } from './components/common/ErrorBoundary';
 import { NoticeModal } from './components/export/NoticeModal';
@@ -142,8 +142,10 @@ export function App() {
           onToggleFrameMode={() => setIsMobileFrameMode(!isMobileFrameMode)}
         />
 
-        {/* SIH26034 Official Problem Statement Banner */}
-        <SIHProblemBanner onOpenNotice={() => setIsNoticeOpen(true)} />
+        {/* Official Government Trust Crest & Consumer Protection Helpline */}
+        <div className="mt-2">
+          <GovtTrustBanner />
+        </div>
 
         {/* PWA Install Banner */}
         <div className="mt-2">
@@ -163,42 +165,40 @@ export function App() {
         {/* Tab 1: Home Tab */}
         {activeTab === 'home' && (
           <div>
-            {/* Desktop / Laptop Responsive Two-Column Layout (when not in mobile frame mode) */}
+            {/* Desktop / Laptop Responsive Full-Width Carousel Layout */}
             {!isMobileFrameMode ? (
-              <div className="space-y-6">
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 pt-2 items-start">
-                  
-                  {/* Left Column (Desktop 7 cols) */}
-                  <div className="lg:col-span-7 space-y-4">
-                    {/* Hero Greeting Heading */}
-                    <NutriHero />
+              <div className="space-y-6 pt-2">
+                {/* Hero Greeting Heading */}
+                <NutriHero />
 
-                    {/* 3D Interactive Rotating Product Card */}
-                    <Interactive3DCard
-                      onExploreProduct={(presetId) => handleScanComplete(presetId)}
-                    />
+                {/* FULL HORIZONTAL SPACE SLIDING CAROUSEL */}
+                <div className="w-full">
+                  <Interactive3DCard
+                    onExploreProduct={(presetId) => handleScanComplete(presetId)}
+                  />
+                </div>
 
-                    {/* Tactile Action Buttons */}
-                    <ActionButtons
-                      onScanClick={() => setIsScannerOpen(true)}
-                      onUploadClick={() => setIsUploadModalOpen(true)}
-                      onRecentScansClick={() => setIsDrawerOpen(true)}
-                    />
+                {/* Tactile Action Buttons */}
+                <ActionButtons
+                  onScanClick={() => setIsScannerOpen(true)}
+                  onUploadClick={() => setIsUploadModalOpen(true)}
+                  onRecentScansClick={() => setIsDrawerOpen(true)}
+                />
 
-                    {/* Browse by Category */}
-                    <CategoryBrowse onSelectCategory={() => setActiveTab('category')} />
-                  </div>
-
-                  {/* Right Column (Desktop 5 cols) */}
-                  <div className="lg:col-span-5 space-y-4">
-                    {/* Active Audit Result Snapshot */}
+                {/* Two-Column Inspection & Product Tray Section */}
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start pt-2">
+                  {/* Left Column (Desktop 6 cols): Active Audit Result Snapshot & Category Browse */}
+                  <div className="lg:col-span-6 space-y-6">
                     <TodaySnapshot
                       report={report}
                       onViewAll={() => setActiveTab('insights')}
                       onInspect={() => setIsDrawerOpen(true)}
                     />
+                    <CategoryBrowse onSelectCategory={() => setActiveTab('category')} />
+                  </div>
 
-                    {/* Recently Scanned List */}
+                  {/* Right Column (Desktop 6 cols): Recently Scanned Specimen Tray */}
+                  <div className="lg:col-span-6 space-y-6">
                     <RecentlyScanned
                       items={recentItems}
                       onSelectItem={handleSelectItem}
@@ -206,32 +206,21 @@ export function App() {
                     />
                   </div>
                 </div>
-
-                {/* Promotional Showcase with React Bits Pro StaggeredText */}
-                <div className="mt-8">
-                  <PromotionalShowcase
-                    onInspectProduct={(presetId) => handleScanComplete(presetId)}
-                  />
-                </div>
               </div>
             ) : (
               /* Mobile Frame Layout (matches mobile stream) */
               <div className="space-y-3 pt-1">
                 <NutriHero />
-                <Interactive3DCard
-                  onExploreProduct={(presetId) => handleScanComplete(presetId)}
-                />
+                <div className="w-full">
+                  <Interactive3DCard
+                    onExploreProduct={(presetId) => handleScanComplete(presetId)}
+                  />
+                </div>
                 <ActionButtons
                   onScanClick={() => setIsScannerOpen(true)}
                   onUploadClick={() => setIsUploadModalOpen(true)}
                   onRecentScansClick={() => setIsDrawerOpen(true)}
                 />
-
-                {/* Promotional Staggered Text Showcase with Minimal Products */}
-                <PromotionalShowcase
-                  onInspectProduct={(presetId) => handleScanComplete(presetId)}
-                />
-
                 <TodaySnapshot
                   report={report}
                   onViewAll={() => setActiveTab('insights')}
