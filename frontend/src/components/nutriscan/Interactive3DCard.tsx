@@ -107,54 +107,16 @@ export const Interactive3DCard: React.FC<Interactive3DCardProps> = ({ onExploreP
             className="w-full h-full object-cover sm:object-contain bg-zinc-900 transition-transform duration-700 group-hover:scale-[1.01]"
           />
 
-          {/* Top Pill Overlay (Badge & Slide Indicator) */}
-          <div className="absolute top-3 sm:top-5 inset-x-3 sm:inset-x-5 flex items-center justify-between pointer-events-none">
-            <span
-              className="px-3 py-1 rounded-full text-[10px] sm:text-xs font-black uppercase tracking-wider text-zinc-950 shadow-md pointer-events-auto backdrop-blur-md"
-              style={{ backgroundColor: slide.badgeColor }}
+          {/* Clean Image View with subtle play/pause control */}
+          <div className="absolute top-3 sm:top-4 right-3 sm:right-4 z-10 pointer-events-auto">
+            <button
+              type="button"
+              onClick={() => setIsPlaying(!isPlaying)}
+              className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-black/50 hover:bg-black/80 backdrop-blur-md text-white flex items-center justify-center transition-all border border-white/20 shadow-md"
+              title={isPlaying ? 'Pause slideshow' : 'Play slideshow'}
             >
-              {slide.badge}
-            </span>
-
-            <div className="flex items-center gap-2 pointer-events-auto">
-              {/* Play/Pause Button */}
-              <button
-                type="button"
-                onClick={() => setIsPlaying(!isPlaying)}
-                className="w-8 h-8 rounded-full bg-black/60 hover:bg-black/80 backdrop-blur-md text-white flex items-center justify-center transition-all border border-white/20 shadow-md"
-                title={isPlaying ? 'Pause slideshow' : 'Play slideshow'}
-              >
-                {isPlaying ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5" />}
-              </button>
-            </div>
-          </div>
-
-          {/* Bottom Educational Caption Overlay */}
-          <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/90 via-black/60 to-transparent p-4 sm:p-6 text-left flex flex-col sm:flex-row sm:items-end justify-between gap-3">
-            <div className="space-y-1 max-w-xl">
-              <h3 className="text-base sm:text-xl md:text-2xl font-black text-white tracking-tight leading-tight drop-shadow-md">
-                {slide.title}
-              </h3>
-              <p className="text-xs sm:text-sm text-zinc-200 font-semibold drop-shadow-sm">
-                {slide.caption}
-              </p>
-              <p className="text-[11px] text-zinc-400 hidden sm:block">
-                {slide.subCaption}
-              </p>
-            </div>
-
-            {/* Quick Action Button */}
-            <div className="flex items-center gap-2 shrink-0">
-              <button
-                type="button"
-                onClick={() => onExploreProduct && onExploreProduct(slide.presetId)}
-                className="px-4 sm:px-5 py-2 sm:py-2.5 rounded-xl sm:rounded-2xl bg-[#D5FF3F] hover:bg-[#cbf432] active:scale-95 text-zinc-950 font-black text-xs transition-all flex items-center gap-1.5 shadow-lg shadow-[#D5FF3F]/25"
-              >
-                <Camera className="w-3.5 h-3.5" />
-                <span>{slide.actionText}</span>
-                <ArrowRight className="w-3.5 h-3.5" />
-              </button>
-            </div>
+              {isPlaying ? <Pause className="w-3 h-3 sm:w-3.5 sm:h-3.5" /> : <Play className="w-3 h-3 sm:w-3.5 sm:h-3.5" />}
+            </button>
           </div>
 
           {/* Prev / Next Navigation Arrows on Image */}
