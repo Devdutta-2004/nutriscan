@@ -1,12 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { X, Camera, Sparkles, RefreshCw, Zap, CheckCircle2, UploadCloud } from 'lucide-react';
+import { X, Camera, Sparkles, RefreshCw, Zap, CheckCircle2, UploadCloud, Video, SwitchCamera } from 'lucide-react';
 import { AuditReport } from '../../types/compliance';
-import { RECENT_ITEMS, ScannedItem } from './RecentlyScanned';
+import { FairPackAPI } from '../../services/api';
 
 interface LiveScannerModalProps {
   isOpen: boolean;
   onClose: () => void;
   onScanComplete: (presetId: string) => void;
+  onAuditComplete?: (report: AuditReport) => void;
   onFileUpload: (file: File) => void;
 }
 
@@ -14,27 +15,37 @@ export const LiveScannerModal: React.FC<LiveScannerModalProps> = ({
   isOpen,
   onClose,
   onScanComplete,
+  onAuditComplete,
   onFileUpload,
 }) => {
   const [useRealCamera, setUseRealCamera] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [analyzingStage, setAnalyzingStage] = useState('Position packaging inside frame');
   const [selectedPreset, setSelectedPreset] = useState<string>('compliant-biscuit');
   const videoRef = useRef<HTMLVideoElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Initialize camera if user chooses
+  // Initialize real device camera stream if requested
   useEffect(() => {
     let stream: MediaStream | null = null;
     if (isOpen && useRealCamera) {
       navigator.mediaDevices
-        ?.getUserMedia({ video: { facingMode: 'environment' } })
+        ?.getUserMedia({
+          video: {
+            facingMode: { ideal: 'environment' },
+            width: { ideal: 1280 },
+            height: { ideal: 720 },
+          },
+        })
         .then((s) => {
           stream = s;
           if (videoRef.current) {
             videoRef.current.srcObject = s;
           }
         })
-        .catch(() => {
+        .catch((err) => {
+          console.warn('Camera access denied or unavailable:', err);
           setUseRealCamera(false);
         });
     }
@@ -48,14 +59,53 @@ export const LiveScannerModal: React.FC<LiveScannerModalProps> = ({
 
   if (!isOpen) return null;
 
+  // Real Camera Snapshot & Live OCR
+  const handleCaptureRealCamera = async () => {
+    if (!videoRef.current) return;
+    const video = videoRef.current;
+
+    const canvas = document.createElement('canvas');
+    canvas.width = video.videoWidth || 640;
+    canvas.height = video.videoHeight || 480;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    canvas.toBlob(async (blob) => {
+      if (!blob) return;
+      const file = new File([blob], `Camera_Capture_${Date.now()}.jpg`, { type: 'image/jpeg' });
+
+      setIsAnalyzing(true);
+      setAnalyzingStage('Running OCR on camera capture...');
+
+      try {
+        const report = await FairPackAPI.uploadImageAndAudit(file, (stage) => {
+          setAnalyzingStage(stage);
+        });
+
+        setIsAnalyzing(false);
+        if (onAuditComplete) {
+          onAuditComplete(report);
+        } else {
+          onFileUpload(file);
+        }
+        onClose();
+      } catch (err) {
+        console.error('Camera OCR failed:', err);
+        setIsAnalyzing(false);
+      }
+    }, 'image/jpeg', 0.92);
+  };
+
   const handleSimulateScan = (presetId: string) => {
     setIsAnalyzing(true);
     setSelectedPreset(presetId);
+    setAnalyzingStage('Extracting tokens and bounding boxes...');
     setTimeout(() => {
       setIsAnalyzing(false);
       onScanComplete(presetId);
       onClose();
-    }, 1200);
+    }, 1000);
   };
 
   return (
@@ -70,10 +120,10 @@ export const LiveScannerModal: React.FC<LiveScannerModalProps> = ({
             </div>
             <div>
               <h3 className="font-extrabold text-sm sm:text-base tracking-tight">
-                Live Label &amp; Barcode Scanner
+                Live Label &amp; Camera Scanner
               </h3>
               <p className="text-[11px] text-zinc-400 font-mono">
-                AI Layout OCR &amp; Statutory Compliance Engine
+                Real-time Optical OCR &amp; Statutory Compliance Engine
               </p>
             </div>
           </div>
@@ -87,12 +137,13 @@ export const LiveScannerModal: React.FC<LiveScannerModalProps> = ({
         </div>
 
         {/* Camera Viewfinder Screen */}
-        <div className="relative w-full h-[280px] sm:h-[340px] bg-black flex items-center justify-center overflow-hidden">
+        <div className="relative w-full h-[300px] sm:h-[350px] bg-black flex items-center justify-center overflow-hidden">
           {useRealCamera ? (
             <video
               ref={videoRef}
               autoPlay
               playsInline
+              muted
               className="w-full h-full object-cover"
             />
           ) : (
@@ -126,23 +177,23 @@ export const LiveScannerModal: React.FC<LiveScannerModalProps> = ({
           <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-transparent via-[#D5FF3F] to-transparent shadow-[0_0_20px_#D5FF3F] animate-[bounce_2s_infinite]" />
 
           {/* Targeting Corner Reticles */}
-          <div className="absolute inset-8 sm:inset-12 pointer-events-none border-2 border-dashed border-[#D5FF3F]/40 rounded-2xl flex flex-col justify-between p-2">
+          <div className="absolute inset-6 sm:inset-10 pointer-events-none border-2 border-dashed border-[#D5FF3F]/40 rounded-2xl flex flex-col justify-between p-2">
             <div className="flex justify-between">
               <div className="w-6 h-6 border-t-4 border-l-4 border-[#D5FF3F] -mt-1 -ml-1 rounded-tl-lg" />
               <div className="w-6 h-6 border-t-4 border-r-4 border-[#D5FF3F] -mt-1 -mr-1 rounded-tr-lg" />
             </div>
             
             {/* Center Status Badge */}
-            <div className="self-center px-3 py-1 rounded-full bg-black/75 backdrop-blur-md border border-[#D5FF3F]/40 text-[#D5FF3F] text-[11px] font-mono font-bold flex items-center gap-1.5 shadow-lg">
+            <div className="self-center px-3 py-1 rounded-full bg-black/80 backdrop-blur-md border border-[#D5FF3F]/40 text-[#D5FF3F] text-[11px] font-mono font-bold flex items-center gap-1.5 shadow-lg max-w-[85%] truncate">
               {isAnalyzing ? (
                 <>
-                  <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                  <span>EXTRACTING LMPC TOKENS...</span>
+                  <RefreshCw className="w-3.5 h-3.5 animate-spin shrink-0" />
+                  <span className="truncate">{analyzingStage}</span>
                 </>
               ) : (
                 <>
-                  <Zap className="w-3 h-3 fill-[#D5FF3F]" />
-                  <span>ALIGN PACKAGING IN RETICLE</span>
+                  <span className="w-2 h-2 rounded-full bg-[#D5FF3F] animate-pulse shrink-0" />
+                  <span className="truncate">{analyzingStage}</span>
                 </>
               )}
             </div>
@@ -152,71 +203,80 @@ export const LiveScannerModal: React.FC<LiveScannerModalProps> = ({
               <div className="w-6 h-6 border-b-4 border-r-4 border-[#D5FF3F] -mb-1 -mr-1 rounded-br-lg" />
             </div>
           </div>
+
+          {/* Camera Mode Toggle Button */}
+          <button
+            onClick={() => setUseRealCamera(!useRealCamera)}
+            className="absolute top-3 left-3 px-3 py-1.5 rounded-full bg-zinc-900/80 backdrop-blur-md border border-white/20 text-xs font-bold text-white hover:bg-zinc-800 transition-colors flex items-center gap-1.5 z-20"
+          >
+            {useRealCamera ? (
+              <>
+                <RefreshCw className="w-3.5 h-3.5 text-[#D5FF3F]" />
+                <span>Show Demo Target</span>
+              </>
+            ) : (
+              <>
+                <Video className="w-3.5 h-3.5 text-[#26E1E8]" />
+                <span>Enable Phone / Web Camera</span>
+              </>
+            )}
+          </button>
         </div>
 
-        {/* Quick Sample Selector Bar */}
-        <div className="p-4 bg-zinc-900/80 border-t border-white/10 space-y-3">
-          <div className="flex items-center justify-between text-xs">
-            <span className="text-zinc-400 font-medium">Or simulate scanning preset:</span>
+        {/* Action Controls Footer */}
+        <div className="p-4 sm:p-5 bg-zinc-900/80 border-t border-white/10 space-y-3">
+          {useRealCamera ? (
+            /* Real Camera Capture Button */
             <button
-              onClick={() => setUseRealCamera(!useRealCamera)}
-              className="text-[11px] text-[#D5FF3F] hover:underline font-mono"
+              onClick={handleCaptureRealCamera}
+              disabled={isAnalyzing}
+              className="w-full py-3.5 rounded-2xl bg-[#D5FF3F] hover:bg-[#cbf432] text-zinc-950 font-black text-sm transition-all active:scale-[0.98] flex items-center justify-center gap-2 shadow-lg disabled:opacity-50"
             >
-              {useRealCamera ? 'Switch to Virtual Viewfinder' : 'Enable Device Webcam'}
+              <Camera className="w-5 h-5 stroke-[2.5]" />
+              <span>Capture Label &amp; Run OCR Audit</span>
             </button>
-          </div>
+          ) : (
+            /* Synthetic Scan Mode with Presets */
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-bold text-zinc-400">
+                  Select specimen to scan:
+                </span>
+                <span className="text-[10px] font-mono text-[#D5FF3F]">
+                  Tap to scan instantly
+                </span>
+              </div>
 
-          <div className="grid grid-cols-3 gap-2">
-            <button
-              onClick={() => handleSimulateScan('compliant-biscuit')}
-              className="p-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-left border border-white/5 hover:border-[#D5FF3F]/40 transition-all text-xs"
-            >
-              <div className="w-2 h-2 rounded-full bg-[#D5FF3F] mb-1" />
-              <p className="font-bold text-white truncate">Multigrain Crackers</p>
-              <p className="text-[10px] text-zinc-400 font-mono">100% Pass</p>
-            </button>
+              <div className="grid grid-cols-3 gap-2">
+                <button
+                  onClick={() => handleSimulateScan('compliant-biscuit')}
+                  className="p-2.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-left transition-colors"
+                >
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 inline-block mr-1" />
+                  <span className="font-bold text-xs block text-white truncate">Biscuit Pack</span>
+                  <span className="text-[10px] text-zinc-400 font-mono">100% Pass</span>
+                </button>
 
-            <button
-              onClick={() => handleSimulateScan('violating-face-cream')}
-              className="p-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-left border border-white/5 hover:border-[#FF2A85]/40 transition-all text-xs"
-            >
-              <div className="w-2 h-2 rounded-full bg-[#FF2A85] mb-1" />
-              <p className="font-bold text-white truncate">Face Cream</p>
-              <p className="text-[10px] text-zinc-400 font-mono">No USP (Rule 6)</p>
-            </button>
+                <button
+                  onClick={() => handleSimulateScan('violating-face-cream')}
+                  className="p-2.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-left transition-colors"
+                >
+                  <span className="w-2 h-2 rounded-full bg-rose-400 inline-block mr-1" />
+                  <span className="font-bold text-xs block text-white truncate">Face Cream</span>
+                  <span className="text-[10px] text-zinc-400 font-mono">Missing USP</span>
+                </button>
 
-            <button
-              onClick={() => handleSimulateScan('imported-chocolate')}
-              className="p-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-left border border-white/5 hover:border-[#8B5CF6]/40 transition-all text-xs"
-            >
-              <div className="w-2 h-2 rounded-full bg-[#8B5CF6] mb-1" />
-              <p className="font-bold text-white truncate">Swiss Chocolate</p>
-              <p className="text-[10px] text-zinc-400 font-mono">Missing Importer</p>
-            </button>
-          </div>
-
-          {/* Manual File Upload Fallback */}
-          <div className="pt-1 flex items-center justify-between">
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*,.pdf"
-              className="hidden"
-              onChange={(e) => {
-                if (e.target.files && e.target.files[0]) {
-                  onFileUpload(e.target.files[0]);
-                  onClose();
-                }
-              }}
-            />
-            <button
-              onClick={() => fileInputRef.current?.click()}
-              className="w-full py-2 px-3 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-xs font-semibold text-zinc-200 border border-white/10 flex items-center justify-center gap-2 transition-colors"
-            >
-              <UploadCloud className="w-4 h-4 text-[#26E1E8]" />
-              <span>Upload Custom Label Artwork / PDF</span>
-            </button>
-          </div>
+                <button
+                  onClick={() => handleSimulateScan('imported-chocolate')}
+                  className="p-2.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-left transition-colors"
+                >
+                  <span className="w-2 h-2 rounded-full bg-amber-400 inline-block mr-1" />
+                  <span className="font-bold text-xs block text-white truncate">Swiss Choco</span>
+                  <span className="text-[10px] text-zinc-400 font-mono">Math Error</span>
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

@@ -18,7 +18,8 @@ export interface BoundingBox {
 export interface GazetteCitation {
   rule: string;
   gazette_ref: string;
-  verbatim_clause: string;
+  verbatim_clause?: string;
+  verbatim_text?: string;
   officer_guidance: string;
   penalty_rule: string;
 }
@@ -49,9 +50,9 @@ export interface ChecklistItem {
   status: ComplianceStatus;
   extracted_text: string;
   reason: string;
-  severity: 'LOW' | 'MEDIUM' | 'HIGH';
+  severity: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
   citation_key?: string;
-  gazette_citation?: GazetteCitation;
+  gazette_citation?: any;
   details?: any;
 }
 
@@ -59,15 +60,15 @@ export interface AuditReport {
   audit_id: string;
   audit_timestamp: string;
   product_name: string;
-  legal_status: 'FULLY_COMPLIANT' | 'COMPLIANT_WITH_WARNINGS' | 'NON_COMPLIANT_VIOLATION';
-  status_text: string;
+  legal_status: string;
+  status_text?: string;
   compliance_score: number;
   summary: {
     total_mandates_checked: number;
     compliant_count: number;
     warnings_count: number;
     violations_count: number;
-    is_lawful_for_sale: boolean;
+    is_lawful_for_sale?: boolean;
   };
   checklist: ChecklistItem[];
   usp_verification: USPVerification;
@@ -76,7 +77,9 @@ export interface AuditReport {
   bounding_boxes: BoundingBox[];
   image_url?: string;
   preset_id?: string;
+  label_data?: any;
   is_live_upload?: boolean;
+  raw_ocr_text?: string;
 }
 
 export interface DemoPreset {

@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import { X, FileText, CheckCircle2, AlertTriangle, XCircle, ChevronDown, ChevronUp, Scale, Calculator } from 'lucide-react';
+import { X, FileText, CheckCircle2, AlertTriangle, XCircle, ChevronDown, ChevronUp, Scale, Calculator, Terminal } from 'lucide-react';
 import { AuditReport } from '../../types/compliance';
 import { CanvasViewer } from '../inspection/CanvasViewer';
 import { UspFormulaCard } from '../audit/UspFormulaCard';
 import { Big8Checklist } from '../audit/Big8Checklist';
 import { GazetteDrawer } from '../audit/GazetteDrawer';
+import { OCRRawTextViewer } from './OCRRawTextViewer';
 
 interface InspectionDrawerProps {
   isOpen: boolean;
@@ -21,7 +22,7 @@ export const InspectionDrawer: React.FC<InspectionDrawerProps> = ({
 }) => {
   const [activeBoxId, setActiveBoxId] = useState<string | null>(null);
   const [selectedMandateId, setSelectedMandateId] = useState<string | null>(null);
-  const [viewTab, setViewTab] = useState<'label' | 'checklist' | 'math' | 'gazette'>('label');
+  const [viewTab, setViewTab] = useState<'label' | 'checklist' | 'math' | 'gazette' | 'ocr'>('label');
 
   if (!isOpen || !report) return null;
 
@@ -54,7 +55,7 @@ export const InspectionDrawer: React.FC<InspectionDrawerProps> = ({
               {report.compliance_score >= 90 ? 'A+' : report.compliance_score >= 70 ? 'B-' : 'C'}
             </div>
             <div>
-              <h3 className="font-extrabold text-base text-zinc-900 leading-tight">
+              <h3 className="font-extrabold text-base text-zinc-900 leading-tight truncate max-w-[260px] sm:max-w-[320px]">
                 {report.product_name}
               </h3>
               <p className="text-[11px] font-semibold text-zinc-500 mt-0.5">
@@ -79,10 +80,10 @@ export const InspectionDrawer: React.FC<InspectionDrawerProps> = ({
         </div>
 
         {/* Tab switcher */}
-        <div className="flex items-center gap-1.5 p-2 bg-white/60 border-b border-zinc-200/60 overflow-x-auto text-xs font-bold">
+        <div className="flex items-center gap-1.5 p-2 bg-white/60 border-b border-zinc-200/60 overflow-x-auto text-xs font-bold no-scrollbar">
           <button
             onClick={() => setViewTab('label')}
-            className={`px-3 py-1.5 rounded-xl transition-all ${
+            className={`px-3 py-1.5 rounded-xl transition-all shrink-0 ${
               viewTab === 'label'
                 ? 'bg-zinc-900 text-white shadow-sm'
                 : 'text-zinc-600 hover:bg-zinc-100'
@@ -92,7 +93,7 @@ export const InspectionDrawer: React.FC<InspectionDrawerProps> = ({
           </button>
           <button
             onClick={() => setViewTab('checklist')}
-            className={`px-3 py-1.5 rounded-xl transition-all ${
+            className={`px-3 py-1.5 rounded-xl transition-all shrink-0 ${
               viewTab === 'checklist'
                 ? 'bg-zinc-900 text-white shadow-sm'
                 : 'text-zinc-600 hover:bg-zinc-100'
@@ -102,23 +103,33 @@ export const InspectionDrawer: React.FC<InspectionDrawerProps> = ({
           </button>
           <button
             onClick={() => setViewTab('math')}
-            className={`px-3 py-1.5 rounded-xl transition-all ${
+            className={`px-3 py-1.5 rounded-xl transition-all shrink-0 ${
               viewTab === 'math'
                 ? 'bg-zinc-900 text-white shadow-sm'
                 : 'text-zinc-600 hover:bg-zinc-100'
             }`}
           >
-            USP Formula
+            USP Math
+          </button>
+          <button
+            onClick={() => setViewTab('ocr')}
+            className={`px-3 py-1.5 rounded-xl transition-all shrink-0 ${
+              viewTab === 'ocr'
+                ? 'bg-zinc-900 text-white shadow-sm'
+                : 'text-zinc-600 hover:bg-zinc-100'
+            }`}
+          >
+            Raw OCR
           </button>
           <button
             onClick={() => setViewTab('gazette')}
-            className={`px-3 py-1.5 rounded-xl transition-all ${
+            className={`px-3 py-1.5 rounded-xl transition-all shrink-0 ${
               viewTab === 'gazette'
                 ? 'bg-zinc-900 text-white shadow-sm'
                 : 'text-zinc-600 hover:bg-zinc-100'
             }`}
           >
-            Gazette Citation
+            Gazette Law
           </button>
         </div>
 
@@ -155,6 +166,15 @@ export const InspectionDrawer: React.FC<InspectionDrawerProps> = ({
             </div>
           )}
 
+          {viewTab === 'ocr' && (
+            <div>
+              <OCRRawTextViewer
+                rawText={report.raw_ocr_text}
+                extractedFields={report.label_data}
+              />
+            </div>
+          )}
+
           {viewTab === 'gazette' && (
             <div className="space-y-3">
               <GazetteDrawer
@@ -168,21 +188,27 @@ export const InspectionDrawer: React.FC<InspectionDrawerProps> = ({
           )}
         </div>
 
-        {/* Footer CTAs */}
+        {/* Drawer Footer Actions */}
         <div className="p-4 bg-white border-t border-zinc-200/80 flex items-center justify-between gap-3">
           <button
-            onClick={onOpenNotice}
-            className="flex-1 bg-[#0E1118] hover:bg-black text-white font-bold text-xs py-3 px-4 rounded-xl flex items-center justify-center gap-2 shadow-sm active:scale-95 transition-all"
+            onClick={onClose}
+            className="px-4 py-2 rounded-xl text-xs font-bold text-zinc-600 hover:text-zinc-900"
           >
-            <FileText className="w-4 h-4 text-[#D5FF3F]" />
-            <span>Generate Official Rule 32 Notice</span>
+            Close
           </button>
 
           <button
-            onClick={onClose}
-            className="px-4 py-3 bg-zinc-100 hover:bg-zinc-200 text-zinc-700 font-bold text-xs rounded-xl transition-colors"
+            onClick={onOpenNotice}
+            className={`px-4 py-2.5 rounded-2xl text-xs font-black flex items-center gap-1.5 shadow-sm transition-all active:scale-95 ${
+              isCompliant
+                ? 'bg-[#D5FF3F] text-zinc-950 hover:bg-[#c9f635]'
+                : 'bg-[#FF2A85] text-white hover:bg-rose-600'
+            }`}
           >
-            Done
+            <FileText className="w-3.5 h-3.5" />
+            <span>
+              {isCompliant ? 'View Statutory Certificate' : 'Issue Rule 32 Notice'}
+            </span>
           </button>
         </div>
       </div>

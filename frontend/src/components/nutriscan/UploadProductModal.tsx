@@ -1,16 +1,18 @@
 import React, { useState, useRef } from 'react';
 import { X, UploadCloud, Image as ImageIcon, Sparkles, CheckCircle2, Loader2, ArrowRight, RefreshCw, FileText, Camera } from 'lucide-react';
+import { FairPackAPI } from '../../services/api';
+import { AuditReport } from '../../types/compliance';
 
 interface UploadProductModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onUploadSuccess: (file: File, previewUrl: string) => void;
+  onAuditComplete: (report: AuditReport) => void;
 }
 
 export const UploadProductModal: React.FC<UploadProductModalProps> = ({
   isOpen,
   onClose,
-  onUploadSuccess,
+  onAuditComplete,
 }) => {
   const [isDragOver, setIsDragOver] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -50,34 +52,33 @@ export const UploadProductModal: React.FC<UploadProductModalProps> = ({
     }
   };
 
-  const handleRunAudit = () => {
+  const handleRunAudit = async () => {
     if (!selectedFile || !previewUrl) return;
 
     setIsProcessing(true);
-    setProgressPercent(20);
-    setProcessingStage('Ingesting image & deskewing...');
+    setProgressPercent(10);
+    setProcessingStage('Reading packaging image & contrast normalization...');
 
-    setTimeout(() => {
-      setProgressPercent(50);
-      setProcessingStage('Layout-Aware OCR Token Extraction...');
-      setTimeout(() => {
-        setProgressPercent(85);
-        setProcessingStage('Deterministic USP & Big-8 LMPC Audit...');
-        setTimeout(() => {
-          setProgressPercent(100);
-          setProcessingStage('Document-Grounded Gazette Citations Linked!');
-          setTimeout(() => {
-            setIsProcessing(false);
-            onUploadSuccess(selectedFile, previewUrl);
-            onClose();
-            // Reset modal state
-            setSelectedFile(null);
-            setPreviewUrl(null);
-            setProgressPercent(0);
-          }, 350);
-        }, 500);
-      }, 500);
-    }, 450);
+    try {
+      // Execute real in-browser OCR & deterministic audit
+      const report = await FairPackAPI.uploadImageAndAudit(selectedFile, (stage, percent) => {
+        setProcessingStage(stage);
+        setProgressPercent(percent);
+      });
+
+      setIsProcessing(false);
+      onAuditComplete(report);
+      onClose();
+
+      // Reset state
+      setSelectedFile(null);
+      setPreviewUrl(null);
+      setProgressPercent(0);
+    } catch (err) {
+      console.error('Audit processing failed:', err);
+      setIsProcessing(false);
+      setProcessingStage('Error reading label. Please try another image.');
+    }
   };
 
   const handleUseSample = async (svgPath: string, fileName: string) => {
@@ -98,15 +99,15 @@ export const UploadProductModal: React.FC<UploadProductModalProps> = ({
         {/* Header Bar */}
         <div className="flex items-center justify-between p-4 sm:p-5 border-b border-zinc-200/80 bg-white">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-[#0E1118] text-[#D5FF3F] flex items-center justify-center shadow-md">
-              <UploadCloud className="w-5 h-5 stroke-[2.2]" />
+            <div className="w-10 h-10 rounded-2xl bg-[#0E1118] text-[#D5FF3F] flex items-center justify-center font-black shadow-sm">
+              <Camera className="w-5 h-5 stroke-[2.2]" />
             </div>
             <div>
-              <h3 className="font-extrabold text-base text-zinc-900 leading-tight">
-                Upload Packaging Image
+              <h3 className="font-extrabold text-base text-zinc-900 tracking-tight leading-tight">
+                Live Label OCR Scanner
               </h3>
-              <p className="text-[11px] font-semibold text-zinc-500">
-                AI Layout OCR &amp; Legal Metrology Verification
+              <p className="text-[11px] font-semibold text-zinc-500 mt-0.5">
+                Upload packaging artwork or live camera photo for instant LMPC audit
               </p>
             </div>
           </div>
@@ -120,47 +121,46 @@ export const UploadProductModal: React.FC<UploadProductModalProps> = ({
         </div>
 
         {/* Modal Body */}
-        <div className="p-5 space-y-4 max-h-[80vh] overflow-y-auto">
+        <div className="p-4 sm:p-6 space-y-4 max-h-[80vh] overflow-y-auto">
+          {/* File Input (Hidden) */}
           <input
             ref={fileInputRef}
             type="file"
-            accept="image/png,image/jpeg,image/webp,image/svg+xml,application/pdf"
-            className="hidden"
+            accept="image/*,.pdf"
             onChange={(e) => {
-              if (e.target.files && e.target.files[0]) {
+              if (e.target.files && e.target.files.length > 0) {
                 handleFile(e.target.files[0]);
               }
             }}
+            className="hidden"
           />
 
+          {/* Drag & Drop Zone (if no file chosen yet) */}
           {!previewUrl ? (
-            /* Empty State: Drag & Drop Dropzone */
             <div
               onDragEnter={handleDragEnter}
               onDragLeave={handleDragLeave}
               onDragOver={handleDragOver}
               onDrop={handleDrop}
               onClick={() => fileInputRef.current?.click()}
-              className={`border-2 border-dashed rounded-[26px] p-8 text-center cursor-pointer transition-all duration-200 flex flex-col items-center justify-center gap-3 ${
+              className={`border-2 border-dashed rounded-3xl p-6 sm:p-8 flex flex-col items-center justify-center text-center cursor-pointer transition-all duration-200 bg-white ${
                 isDragOver
-                  ? 'border-zinc-900 bg-[#D5FF3F]/20 scale-[1.01]'
-                  : 'border-zinc-300 hover:border-zinc-900 bg-white/80 hover:bg-white'
+                  ? 'border-[#D5FF3F] bg-[#D5FF3F]/10 scale-[1.01]'
+                  : 'border-zinc-300 hover:border-zinc-400 hover:bg-zinc-50/80'
               }`}
             >
-              <div className="w-16 h-16 rounded-2xl bg-[#0E1118] text-[#D5FF3F] flex items-center justify-center shadow-md transform group-hover:scale-110 transition-transform">
-                <ImageIcon className="w-8 h-8 stroke-[2]" />
+              <div className="w-14 h-14 rounded-2xl bg-[#0E1118] text-[#D5FF3F] flex items-center justify-center mb-3 shadow-md group-hover:scale-105 transition-transform">
+                <UploadCloud className="w-7 h-7 stroke-[2.2]" />
               </div>
 
-              <div>
-                <p className="font-extrabold text-sm sm:text-base text-zinc-900">
-                  Drag and drop packaging artwork here
-                </p>
-                <p className="text-xs text-zinc-500 mt-1 font-medium">
-                  or <span className="text-[#FF2A85] font-bold underline">browse from your device</span>
-                </p>
-              </div>
+              <h4 className="font-black text-sm text-zinc-900 tracking-tight">
+                Choose a product packaging image
+              </h4>
+              <p className="text-xs text-zinc-500 font-medium mt-1 max-w-xs">
+                Drag and drop your front/back label photo here, or browse files from your phone or Mac
+              </p>
 
-              <div className="flex items-center gap-2 pt-1">
+              <div className="flex items-center gap-2 mt-4">
                 <span className="px-2.5 py-1 rounded-full bg-zinc-100 text-[10px] font-mono text-zinc-600 font-bold border border-zinc-200">
                   PNG
                 </span>
@@ -169,9 +169,6 @@ export const UploadProductModal: React.FC<UploadProductModalProps> = ({
                 </span>
                 <span className="px-2.5 py-1 rounded-full bg-zinc-100 text-[10px] font-mono text-zinc-600 font-bold border border-zinc-200">
                   WebP
-                </span>
-                <span className="px-2.5 py-1 rounded-full bg-zinc-100 text-[10px] font-mono text-zinc-600 font-bold border border-zinc-200">
-                  PDF
                 </span>
               </div>
             </div>
@@ -258,51 +255,52 @@ export const UploadProductModal: React.FC<UploadProductModalProps> = ({
                 >
                   <span className="w-2 h-2 rounded-full bg-[#FF2A85] inline-block mr-1" />
                   <span className="font-bold text-zinc-900 block truncate">Face Cream</span>
-                  <span className="text-[10px] text-[#FF2A85] font-mono">Rule 6 Violation</span>
+                  <span className="text-[10px] text-zinc-500 font-mono">No USP</span>
                 </button>
 
                 <button
                   type="button"
-                  onClick={() => handleUseSample('/presets/imported_chocolate.svg', 'Imported_Swiss_Chocolate.svg')}
+                  onClick={() => handleUseSample('/presets/imported_chocolate.svg', 'Swiss_Choco_Mismatch.svg')}
                   className="p-2.5 rounded-xl bg-white hover:bg-zinc-100 border border-zinc-200/90 text-left transition-colors"
                 >
                   <span className="w-2 h-2 rounded-full bg-[#8B5CF6] inline-block mr-1" />
                   <span className="font-bold text-zinc-900 block truncate">Swiss Choco</span>
-                  <span className="text-[10px] text-[#8B5CF6] font-mono">No Importer</span>
+                  <span className="text-[10px] text-zinc-500 font-mono">Math Error</span>
                 </button>
               </div>
             </div>
           )}
         </div>
 
-        {/* Modal Footer */}
-        <div className="p-4 sm:p-5 border-t border-zinc-200/80 bg-white flex items-center justify-between gap-3">
+        {/* Footer Actions */}
+        <div className="p-4 sm:p-5 bg-white border-t border-zinc-200/80 flex items-center justify-between gap-3">
           <button
             onClick={onClose}
-            className="px-4 py-3 bg-zinc-100 hover:bg-zinc-200 text-zinc-700 font-bold text-xs rounded-2xl transition-colors"
+            disabled={isProcessing}
+            className="px-4 py-2.5 rounded-2xl bg-zinc-100 hover:bg-zinc-200 text-zinc-700 font-bold text-xs transition-colors"
           >
             Cancel
           </button>
 
           <button
-            disabled={!selectedFile || isProcessing}
             onClick={handleRunAudit}
-            className={`flex-1 py-3 px-5 rounded-2xl font-black text-xs sm:text-sm flex items-center justify-center gap-2 transition-all shadow-md ${
-              selectedFile && !isProcessing
-                ? 'bg-[#0E1118] hover:bg-black text-[#D5FF3F] active:scale-98 shadow-[0_4px_15px_rgba(0,0,0,0.2)]'
-                : 'bg-zinc-200 text-zinc-400 cursor-not-allowed'
+            disabled={!selectedFile || isProcessing}
+            className={`px-5 py-2.5 rounded-2xl font-black text-xs sm:text-sm flex items-center gap-2 transition-all shadow-md ${
+              !selectedFile || isProcessing
+                ? 'bg-zinc-200 text-zinc-400 cursor-not-allowed'
+                : 'bg-[#0E1118] text-[#D5FF3F] hover:bg-black active:scale-95'
             }`}
           >
             {isProcessing ? (
               <>
                 <Loader2 className="w-4 h-4 animate-spin text-[#D5FF3F]" />
-                <span>Running LMPC Compliance Audit...</span>
+                <span>Running Optical &amp; Legal Audit...</span>
               </>
             ) : (
               <>
-                <CheckCircle2 className="w-4 h-4 text-[#D5FF3F]" />
+                <Sparkles className="w-4 h-4 text-[#D5FF3F]" />
                 <span>Run Compliance &amp; Nutrition Audit</span>
-                <ArrowRight className="w-4 h-4 ml-1" />
+                <ArrowRight className="w-4 h-4" />
               </>
             )}
           </button>

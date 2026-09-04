@@ -80,36 +80,29 @@ export function App() {
     }
   };
 
-  const handleUploadSuccess = async (file: File, previewUrl: string) => {
-    try {
-      const newReport = await FairPackAPI.uploadImageAndAudit(file);
-      newReport.image_url = previewUrl;
-      setReport(newReport);
+  const handleAuditComplete = (newReport: AuditReport) => {
+    setReport(newReport);
 
-      // Create new scanned item card
-      const isA = newReport.compliance_score >= 90;
-      const isB = newReport.compliance_score >= 70;
-      const formattedName =
-        file.name.replace(/\.[^/.]+$/, '').replace(/[-_]/g, ' ') || 'Uploaded Specimen';
+    // Create new scanned item card
+    const isA = newReport.compliance_score >= 90;
+    const isB = newReport.compliance_score >= 70;
+    const formattedName = newReport.product_name || 'Scanned Specimen';
 
-      const newItem: ScannedItem = {
-        id: `upload-${Date.now()}`,
-        name: formattedName.charAt(0).toUpperCase() + formattedName.slice(1),
-        category: 'Uploaded Packaging',
-        timeAgo: 'Just now',
-        grade: isA ? 'A+' : isB ? 'B-' : 'C',
-        gradeBg: isA ? 'bg-[#D5FF3F]' : isB ? 'bg-[#8B5CF6]' : 'bg-[#FF2A85]',
-        gradeColor: isA ? 'text-zinc-950 font-black' : 'text-white font-black',
-        icon: Camera,
-        iconBg: 'bg-[#D5FF3F]/30 text-zinc-900',
-        presetId: 'custom-upload',
-      };
+    const newItem: ScannedItem = {
+      id: `upload-${Date.now()}`,
+      name: formattedName.charAt(0).toUpperCase() + formattedName.slice(1),
+      category: 'Scanned Packaging',
+      timeAgo: 'Just now',
+      grade: isA ? 'A+' : isB ? 'B-' : 'C',
+      gradeBg: isA ? 'bg-[#D5FF3F]' : isB ? 'bg-[#8B5CF6]' : 'bg-[#FF2A85]',
+      gradeColor: isA ? 'text-zinc-950 font-black' : 'text-white font-black',
+      icon: Camera,
+      iconBg: 'bg-[#D5FF3F]/30 text-zinc-900',
+      presetId: 'custom-upload',
+    };
 
-      setRecentItems((prev) => [newItem, ...prev]);
-      setIsDrawerOpen(true);
-    } catch (err) {
-      console.error('Upload audit error:', err);
-    }
+    setRecentItems((prev) => [newItem, ...prev]);
+    setIsDrawerOpen(true);
   };
 
   return (
@@ -274,9 +267,10 @@ export function App() {
         isOpen={isScannerOpen}
         onClose={() => setIsScannerOpen(false)}
         onScanComplete={handleScanComplete}
-        onFileUpload={(file) => {
-          const url = URL.createObjectURL(file);
-          handleUploadSuccess(file, url);
+        onAuditComplete={handleAuditComplete}
+        onFileUpload={async (file) => {
+          const report = await FairPackAPI.uploadImageAndAudit(file);
+          handleAuditComplete(report);
         }}
       />
 
@@ -284,7 +278,7 @@ export function App() {
       <UploadProductModal
         isOpen={isUploadModalOpen}
         onClose={() => setIsUploadModalOpen(false)}
-        onUploadSuccess={handleUploadSuccess}
+        onAuditComplete={handleAuditComplete}
       />
 
       {/* Inspection Drawer / Bottom Sheet */}
