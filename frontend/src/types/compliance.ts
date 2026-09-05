@@ -56,6 +56,51 @@ export interface ChecklistItem {
   details?: any;
 }
 
+export interface BarcodeData {
+  detected: boolean;
+  type?: 'EAN-13' | 'UPC-A' | 'CODE-128' | 'EAN-8' | 'OTHER';
+  value?: string;
+  gs1_country?: string;
+  is_valid_gs1?: boolean;
+  country_match?: boolean;
+}
+
+export interface QRCodeData {
+  detected: boolean;
+  raw_payload?: string;
+  url?: string;
+  is_url?: boolean;
+  satisfies_electronic_disclosure?: boolean; // Rule G.S.R. 524(E)
+}
+
+export interface PackagingSymbols {
+  veg_non_veg?: 'VEG' | 'NON_VEG' | 'NOT_APPLICABLE' | 'NOT_FOUND';
+  fssai_license?: {
+    detected: boolean;
+    license_number?: string;
+    is_valid_format?: boolean; // 14-digit
+  };
+  isi_bis_mark?: {
+    detected: boolean;
+    cm_l_number?: string;
+  };
+  recycling_info?: {
+    detected: boolean;
+    resin_code?: string; // e.g., '1' (PETE), '2' (HDPE), '5' (PP)
+    material_name?: string;
+    mobius_loop?: boolean;
+    tidyman_symbol?: boolean;
+  };
+  e_mark?: {
+    detected: boolean; // European ℮ average fill mark / LM Sched II MPE
+    details?: string;
+  };
+  pao_symbol?: {
+    detected: boolean; // Period After Opening e.g. "12M"
+    period?: string;
+  };
+}
+
 export interface AuditReport {
   audit_id: string;
   audit_timestamp: string;
@@ -83,6 +128,9 @@ export interface AuditReport {
   label_data?: any;
   is_live_upload?: boolean;
   raw_ocr_text?: string;
+  barcode_data?: BarcodeData;
+  qr_data?: QRCodeData;
+  packaging_symbols?: PackagingSymbols;
 }
 
 export interface DemoPreset {
@@ -104,6 +152,10 @@ export interface DemoPreset {
     consumer_care_phone: string;
     consumer_care_email: string;
     country_of_origin: string;
+    barcode_data?: BarcodeData;
+    qr_data?: QRCodeData;
+    packaging_symbols?: PackagingSymbols;
   };
   bounding_boxes: BoundingBox[];
 }
+

@@ -18,7 +18,45 @@ export const DEMO_PRESETS: DemoPreset[] = [
       manufacturer_address: "Sunlight Confectioneries Ltd., Plot 14, Phase II, Peenya Industrial Area, Bengaluru, Karnataka - 560058",
       consumer_care_phone: "+91-80-28394000",
       consumer_care_email: "care@sunlightbiscuits.in",
-      country_of_origin: "India"
+      country_of_origin: "India",
+      barcode_data: {
+        detected: true,
+        type: "EAN-13",
+        value: "8901030383847",
+        gs1_country: "India",
+        is_valid_gs1: true,
+        country_match: true,
+      },
+      qr_data: {
+        detected: true,
+        raw_payload: "https://sunlightbiscuits.in/trace/lot-400g-2024",
+        url: "https://sunlightbiscuits.in/trace/lot-400g-2024",
+        is_url: true,
+        satisfies_electronic_disclosure: true,
+      },
+      packaging_symbols: {
+        veg_non_veg: "VEG",
+        fssai_license: {
+          detected: true,
+          license_number: "10014022002758",
+          is_valid_format: true,
+        },
+        isi_bis_mark: {
+          detected: true,
+          cm_l_number: "CM/L-8294719",
+        },
+        recycling_info: {
+          detected: true,
+          resin_code: "5",
+          material_name: "PP (Polypropylene)",
+          mobius_loop: true,
+          tidyman_symbol: true,
+        },
+        e_mark: {
+          detected: true,
+          details: "European ℮ Average Fill Mark (Schedule II MPE Conforming)",
+        },
+      },
     },
     bounding_boxes: [
       {
@@ -112,7 +150,28 @@ export const DEMO_PRESETS: DemoPreset[] = [
       manufacturer_address: "Aura Naturals Cosmetics Pvt Ltd, Sector 62, Noida, UP - 201309",
       consumer_care_phone: "1800-200-9988",
       consumer_care_email: "",
-      country_of_origin: "India"
+      country_of_origin: "India",
+      barcode_data: {
+        detected: true,
+        type: "EAN-13",
+        value: "8904005900124",
+        gs1_country: "India",
+        is_valid_gs1: true,
+        country_match: true,
+      },
+      packaging_symbols: {
+        veg_non_veg: "NOT_APPLICABLE",
+        pao_symbol: {
+          detected: true,
+          period: "12M (12 Months After Opening)",
+        },
+        recycling_info: {
+          detected: true,
+          resin_code: "2",
+          material_name: "HDPE (High-Density Polyethylene)",
+          mobius_loop: true,
+        },
+      },
     },
     bounding_boxes: [
       {
@@ -207,7 +266,29 @@ export const DEMO_PRESETS: DemoPreset[] = [
       importer_address: "",
       consumer_care_phone: "+41-44-211-0000",
       consumer_care_email: "",
-      country_of_origin: "Switzerland"
+      country_of_origin: "Switzerland",
+      barcode_data: {
+        detected: true,
+        type: "EAN-13",
+        value: "7610000001234",
+        gs1_country: "Switzerland",
+        is_valid_gs1: true,
+        country_match: true,
+      },
+      packaging_symbols: {
+        veg_non_veg: "VEG",
+        e_mark: {
+          detected: true,
+          details: "European ℮ Average Fill Mark (Packaged under EU Council Directive / LM Sched. II)",
+        },
+        recycling_info: {
+          detected: true,
+          resin_code: "21",
+          material_name: "PAP (Paperboard / Aluminum Foil)",
+          mobius_loop: true,
+          tidyman_symbol: true,
+        },
+      },
     },
     bounding_boxes: [
       {

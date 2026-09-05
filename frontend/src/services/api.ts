@@ -3,6 +3,7 @@ import { DEMO_PRESETS } from '../data/demoPresets';
 import { STATUTORY_RULES } from '../data/gazetteRules';
 import { ClientMathEngine } from './mathEngine';
 import { ClientOCREngine, RealOCRResult } from './ocrEngine';
+import { ClientBarcodeEngine } from './barcodeEngine';
 
 const API_BASE = '/api';
 
@@ -65,6 +66,13 @@ export class FairPackAPI {
       // 1. Send all image files to backend multimodal vision pipeline
       const panelLabel = files.length > 1 ? ` (${files.length} panels)` : '';
       onProgress?.(`Sending ${files.length} panel image(s) to Gemini Vision & Statutory RAG...`, 25);
+      
+      // Also concurrently scan with native browser BarcodeDetector API if available
+      const localCodeDetectionPromise = ClientBarcodeEngine.detectCodes(primaryFile).catch(() => ({
+        barcode: { detected: false },
+        qr: { detected: false },
+      }));
+
       try {
         const formData = new FormData();
         for (const f of files) {
@@ -82,6 +90,16 @@ export class FairPackAPI {
           const report = await uploadRes.json();
           report.image_url = previewUrl;
           report.additional_image_urls = files.slice(1).map((f) => URL.createObjectURL(f));
+
+          // Merge local browser barcode/QR detection if backend didn't pick it up
+          const localCodes = await localCodeDetectionPromise;
+          if (localCodes.barcode?.detected && !report.barcode_data?.detected) {
+            report.barcode_data = localCodes.barcode;
+          }
+          if (localCodes.qr?.detected && !report.qr_data?.detected) {
+            report.qr_data = localCodes.qr;
+          }
+
           onProgress?.('Audit complete!', 100);
           return report;
         }
@@ -91,7 +109,12 @@ export class FairPackAPI {
 
       // 2. Client-side OCR fallback on primary image if backend is unreachable
       onProgress?.('Initializing client-side OCR fallback...', 40);
-      const ocrResult: RealOCRResult = await ClientOCREngine.scanImage(primaryFile, onProgress);
+      const [ocrResult, localCodes] = await Promise.all([
+        ClientOCREngine.scanImage(primaryFile, onProgress),
+        localCodeDetectionPromise,
+      ]);
+
+      const parsedSymbols = ClientBarcodeEngine.parseSymbolsFromText(ocrResult.fields.raw_text || '');
 
       // Try /api/audit/run with client extracted tokens
       try {
@@ -100,7 +123,12 @@ export class FairPackAPI {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             product_name: ocrResult.fields.generic_name || primaryFile.name.replace(/\.[^/.]+$/, ''),
-            label_data: ocrResult.fields,
+            label_data: {
+              ...ocrResult.fields,
+              barcode_data: localCodes.barcode?.detected ? localCodes.barcode : undefined,
+              qr_data: localCodes.qr?.detected ? localCodes.qr : undefined,
+              packaging_symbols: parsedSymbols,
+            },
             bounding_boxes: ocrResult.boundingBoxes,
           }),
         });
@@ -109,6 +137,15 @@ export class FairPackAPI {
           const report = await res.json();
           report.image_url = previewUrl;
           report.raw_ocr_text = ocrResult.fields.raw_text;
+          if (!report.barcode_data && localCodes.barcode?.detected) {
+            report.barcode_data = localCodes.barcode;
+          }
+          if (!report.qr_data && localCodes.qr?.detected) {
+            report.qr_data = localCodes.qr;
+          }
+          if (!report.packaging_symbols) {
+            report.packaging_symbols = parsedSymbols;
+          }
           return report;
         }
       } catch {
@@ -118,7 +155,12 @@ export class FairPackAPI {
       // 3. Deterministic client synthesis using real extracted values
       const clientReport = this.synthesizeClientReport(
         undefined,
-        ocrResult.fields,
+        {
+          ...ocrResult.fields,
+          barcode_data: localCodes.barcode,
+          qr_data: localCodes.qr,
+          packaging_symbols: parsedSymbols,
+        },
         ocrResult.fields.generic_name || primaryFile.name.replace(/\.[^/.]+$/, ''),
         ocrResult.boundingBoxes,
         true
@@ -126,6 +168,9 @@ export class FairPackAPI {
 
       clientReport.image_url = previewUrl;
       clientReport.raw_ocr_text = ocrResult.fields.raw_text;
+      clientReport.barcode_data = localCodes.barcode;
+      clientReport.qr_data = localCodes.qr;
+      clientReport.packaging_symbols = parsedSymbols;
       return clientReport;
     } catch (err) {
       console.warn('OCR error, falling back to heuristic parsing:', err);
@@ -351,6 +396,9 @@ export class FairPackAPI {
       image_url: preset.image_url,
       label_data: labelData,
       is_live_upload: isLiveUpload,
+      barcode_data: labelData.barcode_data,
+      qr_data: labelData.qr_data,
+      packaging_symbols: labelData.packaging_symbols,
     };
   }
 }

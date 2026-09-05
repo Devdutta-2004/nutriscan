@@ -275,7 +275,7 @@ Respond with valid JSON matching the required schema. Do NOT include any text ou
         b64_data = base64.b64encode(image_bytes).decode("utf-8")
 
         vision_prompt = """You are an OCR and Packaging Text Transcription System for Indian pre-packaged commodities.
-Read all printed text from this packaging image carefully, including text on curves, folds, reflective plastic, or barcode areas.
+Read all printed text, barcodes, QR codes, and statutory symbols from this packaging image carefully, including text on curves, folds, reflective plastic, or barcode areas.
 
 Transcribe and extract the following exact fields if present on the label:
 - generic_name: The common or generic commodity name (e.g., 'RATLAMI SEV', 'POTATO CHIPS'). NOT just the brand logo.
@@ -291,29 +291,26 @@ Transcribe and extract the following exact fields if present on the label:
 - country_of_origin: Declared country of manufacture/origin (e.g., 'India', 'Malaysia').
 - language_detected: Primary language of printed text (e.g., 'English', 'Hindi').
 - mrp_values: List of distinct MRP prices if more than one is printed on the package.
+- barcode_data: Object with:
+    - detected: boolean
+    - type: "EAN-13" or "UPC-A" or "CODE-128" or "OTHER"
+    - value: string of decoded numbers under the barcode (e.g. '8901030383847')
+    - gs1_country: detected country based on GS1 prefix (e.g. 'India' for 890, 'USA/Canada' for 000-139)
+- qr_data: Object with:
+    - detected: boolean
+    - raw_payload: string payload or URL encoded in the QR code
+    - url: url if payload is a link
+    - is_url: boolean
+    - satisfies_electronic_disclosure: boolean (true if electronic item secondary info)
+- packaging_symbols: Object with:
+    - veg_non_veg: "VEG" (green dot in green square) | "NON_VEG" (brown/red dot or triangle) | "NOT_APPLICABLE" | "NOT_FOUND"
+    - fssai_license: Object with { detected: boolean, license_number: string or null, is_valid_format: boolean }
+    - isi_bis_mark: Object with { detected: boolean, cm_l_number: string or null }
+    - recycling_info: Object with { detected: boolean, resin_code: string (1-7), material_name: string (e.g. 'PET', 'PP'), mobius_loop: boolean, tidyman_symbol: boolean }
+    - e_mark: Object with { detected: boolean, details: string or null }
+    - pao_symbol: Object with { detected: boolean, period: string or null }
 
-Respond with valid JSON matching the schema below. If a field is not visible in this image crop, return null for that field. Do not invent details."""
-
-        vision_schema = {
-            "type": "object",
-            "properties": {
-                "generic_name": {"type": ["string", "null"]},
-                "net_quantity": {"type": ["string", "null"]},
-                "mrp": {"type": ["string", "null"]},
-                "unit_sale_price": {"type": ["string", "null"]},
-                "mfg_date": {"type": ["string", "null"]},
-                "expiry_date": {"type": ["string", "null"]},
-                "manufacturer_address": {"type": ["string", "null"]},
-                "importer_address": {"type": ["string", "null"]},
-                "consumer_care_phone": {"type": ["string", "null"]},
-                "consumer_care_email": {"type": ["string", "null"]},
-                "country_of_origin": {"type": ["string", "null"]},
-                "language_detected": {"type": ["string", "null"]},
-                "mrp_values": {"type": "array", "items": {"type": "string"}},
-                "raw_text_summary": {"type": "string", "description": "Complete transcription of all text blocks visible"}
-            },
-            "required": ["generic_name", "net_quantity", "mrp"]
-        }
+Respond with valid JSON. If a field is not visible, return null for that field. Do not invent details."""
 
         url = f"{self._base_url}/models/{self._model}:generateContent"
         params = {"key": self._api_key}
@@ -341,6 +338,34 @@ Respond with valid JSON matching the schema below. If a field is not visible in 
             }
         }
 
+        try:
+            if HAS_HTTPX:
+                async with httpx.AsyncClient(timeout=45.0) as client:
+                    response = await client.post(url, params=params, json=payload)
+                    if response.status_code != 200:
+                        logger.warning(f"Gemini Vision API returned {response.status_code}")
+                        return None
+                    data = response.json()
+            else:
+                data = await asyncio.to_thread(self._call_gemini_urllib, url, params, payload)
+                if not data:
+                    return None
+
+            candidates = data.get("candidates", [])
+            if not candidates:
+                return None
+
+            content = candidates[0].get("content", {})
+            p_list = content.get("parts", [])
+            if not p_list:
+                return None
+
+            generated_text = p_list[0].get("text", "")
+            return json.loads(generated_text)
+        except Exception as e:
+            logger.warning(f"Gemini Single-Vision extraction failed: {e}")
+            return None
+
     async def extract_label_from_images(
         self,
         images: List[tuple[bytes, str]]
@@ -350,16 +375,17 @@ Respond with valid JSON matching the schema below. If a field is not visible in 
         Accepts multiple photos of the SAME product (e.g. Front display panel + Back details + Side flap).
         Sends all images together to Gemini Vision in a single multimodal turn so declarations scattered
         across different panels (MRP on top/bottom, Net Qty on front, Consumer Care on back) are all synthesized.
+        Also extracts Barcode numbers, QR codes, and Packaging Certification symbols (Veg/Non-Veg, FSSAI, ISI, Mobius loop).
         """
         if not self.is_available or not images:
             return None
 
         import base64
 
-        vision_prompt = """You are an OCR and Packaging Text Transcription System for Indian pre-packaged commodities.
+        vision_prompt = """You are an OCR, Barcode/QR, and Packaging Symbol Inspection System for Indian pre-packaged commodities.
 You are given MULTIPLE images/panels of the SAME physical product package (e.g., front panel, back information panel, side panel, top/bottom flap).
 
-Combine and transcribe all visible statutory declarations from ALL provided images into a single unified JSON:
+Combine and transcribe all visible statutory declarations and packaging symbols from ALL provided images into a single unified JSON:
 - generic_name: Common or generic commodity name (e.g., 'RATLAMI SEV', 'POTATO CHIPS'). NOT just the brand logo.
 - net_quantity: The declared net quantity or weight in standard metric SI units (e.g., '200 g', '100 ml', '1 N'). Do NOT use 'per 100g' from the nutrition table.
 - mrp: Maximum retail price (e.g., 'Rs. 55.00' or '₹55.00 (INCL. OF ALL TAXES)').
@@ -373,6 +399,24 @@ Combine and transcribe all visible statutory declarations from ALL provided imag
 - country_of_origin: Declared country of origin/manufacture (e.g., 'India', 'Malaysia').
 - language_detected: Primary language of printed statutory declarations (e.g., 'English', 'Hindi').
 - mrp_values: List of all distinct MRP prices printed across any of the panels.
+- barcode_data: Object with:
+    - detected: boolean
+    - type: "EAN-13" or "UPC-A" or "CODE-128" or "OTHER"
+    - value: string of decoded numbers under the barcode (e.g. '8901030383847')
+    - gs1_country: detected country based on GS1 prefix (e.g. 'India' for 890, 'USA/Canada' for 000-139)
+- qr_data: Object with:
+    - detected: boolean
+    - raw_payload: string payload or URL encoded in the QR code
+    - url: url if payload is a link
+    - is_url: boolean
+    - satisfies_electronic_disclosure: boolean (true if electronic item secondary info per GSR 524(E))
+- packaging_symbols: Object with:
+    - veg_non_veg: "VEG" (green dot in green square) | "NON_VEG" (brown/red dot or triangle) | "NOT_APPLICABLE" | "NOT_FOUND"
+    - fssai_license: Object with { detected: boolean, license_number: string or null, is_valid_format: boolean }
+    - isi_bis_mark: Object with { detected: boolean, cm_l_number: string or null }
+    - recycling_info: Object with { detected: boolean, resin_code: string (1-7), material_name: string (e.g. 'PET', 'PP'), mobius_loop: boolean, tidyman_symbol: boolean }
+    - e_mark: Object with { detected: boolean, details: string or null }
+    - pao_symbol: Object with { detected: boolean, period: string or null }
 
 Respond with valid JSON. If a declaration cannot be found on ANY of the provided images, return null for that field. Do not fabricate details."""
 

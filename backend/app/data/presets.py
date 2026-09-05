@@ -26,7 +26,45 @@ DEMO_PRESETS: List[Dict[str, Any]] = [
             "manufacturer_address": "Sunlight Confectioneries Ltd., Plot 14, Phase II, Peenya Industrial Area, Bengaluru, Karnataka - 560058",
             "consumer_care_phone": "+91-80-28394000",
             "consumer_care_email": "care@sunlightbiscuits.in",
-            "country_of_origin": "India"
+            "country_of_origin": "India",
+            "barcode_data": {
+                "detected": True,
+                "type": "EAN-13",
+                "value": "8901030383847",
+                "gs1_country": "India",
+                "is_valid_gs1": True,
+                "country_match": True,
+            },
+            "qr_data": {
+                "detected": True,
+                "raw_payload": "https://sunlightbiscuits.in/trace/lot-400g-2024",
+                "url": "https://sunlightbiscuits.in/trace/lot-400g-2024",
+                "is_url": True,
+                "satisfies_electronic_disclosure": True,
+            },
+            "packaging_symbols": {
+                "veg_non_veg": "VEG",
+                "fssai_license": {
+                    "detected": True,
+                    "license_number": "10014022002758",
+                    "is_valid_format": True,
+                },
+                "isi_bis_mark": {
+                    "detected": True,
+                    "cm_l_number": "CM/L-8294719",
+                },
+                "recycling_info": {
+                    "detected": True,
+                    "resin_code": "5",
+                    "material_name": "PP (Polypropylene)",
+                    "mobius_loop": True,
+                    "tidyman_symbol": True,
+                },
+                "e_mark": {
+                    "detected": True,
+                    "details": "European ℮ Average Fill Mark (Schedule II MPE Conforming)",
+                },
+            },
         },
         "bounding_boxes": [
             {
@@ -120,7 +158,28 @@ DEMO_PRESETS: List[Dict[str, Any]] = [
             "manufacturer_address": "Aura Naturals Cosmetics Pvt Ltd, Sector 62, Noida, UP - 201309",
             "consumer_care_phone": "1800-200-9988",
             "consumer_care_email": "",
-            "country_of_origin": "India"
+            "country_of_origin": "India",
+            "barcode_data": {
+                "detected": True,
+                "type": "EAN-13",
+                "value": "8904005900124",
+                "gs1_country": "India",
+                "is_valid_gs1": True,
+                "country_match": True,
+            },
+            "packaging_symbols": {
+                "veg_non_veg": "NOT_APPLICABLE",
+                "pao_symbol": {
+                    "detected": True,
+                    "period": "12M (12 Months After Opening)",
+                },
+                "recycling_info": {
+                    "detected": True,
+                    "resin_code": "2",
+                    "material_name": "HDPE (High-Density Polyethylene)",
+                    "mobius_loop": True,
+                },
+            },
         },
         "bounding_boxes": [
             {
@@ -215,7 +274,29 @@ DEMO_PRESETS: List[Dict[str, Any]] = [
             "importer_address": "",
             "consumer_care_phone": "+41-44-211-0000",
             "consumer_care_email": "",
-            "country_of_origin": "Switzerland"
+            "country_of_origin": "Switzerland",
+            "barcode_data": {
+                "detected": True,
+                "type": "EAN-13",
+                "value": "7610000001234",
+                "gs1_country": "Switzerland",
+                "is_valid_gs1": True,
+                "country_match": True,
+            },
+            "packaging_symbols": {
+                "veg_non_veg": "VEG",
+                "e_mark": {
+                    "detected": True,
+                    "details": "European ℮ Average Fill Mark (Packaged under EU Council Directive / LM Sched. II)",
+                },
+                "recycling_info": {
+                    "detected": True,
+                    "resin_code": "21",
+                    "material_name": "PAP (Paperboard / Aluminum Foil)",
+                    "mobius_loop": True,
+                    "tidyman_symbol": True,
+                },
+            },
         },
         "bounding_boxes": [
             {

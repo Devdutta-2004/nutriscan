@@ -205,7 +205,7 @@ class AuditSynthesizer:
         try:
             corpus_version = Settings.CORPUS_VERSION
         except AttributeError:
-            corpus_version = "v1.0"
+            corpus_version = "2024.1"
         
         report = {
             "audit_id": f"FP-{datetime.utcnow().strftime('%Y%m%d')}-{abs(hash(product_name)) % 10000:04d}",
@@ -231,6 +231,9 @@ class AuditSynthesizer:
             "gemini_analysis": gemini_result or None,
             "tokens": tokens or [],
             "image_metadata": image_metadata or {"width": 800, "height": 600},
+            "barcode_data": big8_result.get("barcode_data"),
+            "qr_data": big8_result.get("qr_data"),
+            "packaging_symbols": big8_result.get("packaging_symbols"),
             "rag_retrieval_stats": {
                 "total_chunks_retrieved": len(all_chunks),
                 "unique_rules_cited": unique_rules_cited,

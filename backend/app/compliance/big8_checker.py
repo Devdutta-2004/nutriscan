@@ -377,30 +377,86 @@ class Big8Checker:
             compliant_count += 1
 
         # 8. Country of Origin (Rule 6(1)(g))
+        barcode_info = label_data.get("barcode_data") or {}
+        barcode_val = str(barcode_info.get("value", "")).strip()
+        gs1_country = barcode_info.get("gs1_country", "")
+
+        # Infer GS1 prefix if raw value provided
+        if not gs1_country and barcode_val and len(barcode_val) >= 3:
+            prefix = barcode_val[:3]
+            if prefix == "890":
+                gs1_country = "India"
+            elif prefix in ["690", "691", "692", "693", "694", "695"]:
+                gs1_country = "China"
+            elif prefix.startswith("0") or prefix.startswith("1"):
+                gs1_country = "USA / Canada"
+
         if not country or country.strip().lower() in ["missing", "none"]:
             results.append({
                 "mandate_id": "country_of_origin",
                 "name": "Country of Origin",
                 "rule": "Rule 6(1)(g)",
                 "status": "VIOLATION",
-                "extracted_text": "Missing",
-                "reason": "Country of origin must be declared on all pre-packed commodities.",
+                "extracted_text": f"Barcode: {barcode_val or 'None'} (GS1: {gs1_country or 'Unknown'}) | Label: Missing",
+                "reason": "Country of origin must be declared on all pre-packed commodities as per Rule 6(1)(g).",
                 "severity": "HIGH",
                 "citation_key": "rule_6_1_g"
             })
             violations_count += 1
         else:
-            results.append({
-                "mandate_id": "country_of_origin",
-                "name": "Country of Origin",
-                "rule": "Rule 6(1)(g)",
-                "status": "COMPLIANT",
-                "extracted_text": country,
-                "reason": f"Country of origin explicitly declared as '{country}'.",
-                "severity": "LOW",
-                "citation_key": "rule_6_1_g"
-            })
-            compliant_count += 1
+            # Check GS1 prefix alignment if barcode is present
+            if gs1_country and barcode_val:
+                is_india_declared = country.lower() in ["india", "in", "ind", "bharat"]
+                is_india_barcode = gs1_country.lower() == "india"
+
+                if is_india_declared and not is_india_barcode:
+                    results.append({
+                        "mandate_id": "country_of_origin",
+                        "name": "Country of Origin & Barcode Discrepancy",
+                        "rule": "Rule 6(1)(g)",
+                        "status": "WARNING",
+                        "extracted_text": f"Label declares '{country}', but GS1 Barcode prefix ({barcode_val[:3]}) denotes '{gs1_country}'",
+                        "reason": f"GS1 Barcode prefix mismatch: Package barcode indicates {gs1_country}, yet origin is declared as {country}. Requires traceability verification.",
+                        "severity": "MEDIUM",
+                        "citation_key": "rule_6_1_g"
+                    })
+                    warnings_count += 1
+                elif not is_india_declared and is_india_barcode:
+                    results.append({
+                        "mandate_id": "country_of_origin",
+                        "name": "Country of Origin & Barcode Discrepancy",
+                        "rule": "Rule 6(1)(g)",
+                        "status": "WARNING",
+                        "extracted_text": f"Label declares imported from '{country}', but GS1 Barcode is 890 (GS1 India registered)",
+                        "reason": "Product is declared imported, but uses an Indian GS1 (890) barcode prefix (possible domestic repacking or license).",
+                        "severity": "MEDIUM",
+                        "citation_key": "rule_6_1_g"
+                    })
+                    warnings_count += 1
+                else:
+                    results.append({
+                        "mandate_id": "country_of_origin",
+                        "name": "Country of Origin",
+                        "rule": "Rule 6(1)(g)",
+                        "status": "COMPLIANT",
+                        "extracted_text": f"Origin: {country} (GS1 {barcode_val[:3]} confirms {gs1_country})",
+                        "reason": f"Country of origin declared as '{country}', verified with GS1 barcode prefix.",
+                        "severity": "LOW",
+                        "citation_key": "rule_6_1_g"
+                    })
+                    compliant_count += 1
+            else:
+                results.append({
+                    "mandate_id": "country_of_origin",
+                    "name": "Country of Origin",
+                    "rule": "Rule 6(1)(g)",
+                    "status": "COMPLIANT",
+                    "extracted_text": country,
+                    "reason": f"Country of origin explicitly declared as '{country}'.",
+                    "severity": "LOW",
+                    "citation_key": "rule_6_1_g"
+                })
+                compliant_count += 1
 
         # 9. Best Before / Expiry Date (Rule 6(1)(f))
         expiry = label_data.get("expiry_date") or label_data.get("best_before")
@@ -528,5 +584,8 @@ class Big8Checker:
                 "critical": critical_count,
                 "is_lawful_for_sale": violations_count == 0
             },
-            "usp_verification": usp_verification
+            "usp_verification": usp_verification,
+            "barcode_data": label_data.get("barcode_data"),
+            "qr_data": label_data.get("qr_data"),
+            "packaging_symbols": label_data.get("packaging_symbols")
         }

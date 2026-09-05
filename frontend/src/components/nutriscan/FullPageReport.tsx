@@ -3,12 +3,13 @@ import {
   ArrowLeft, FileText, CheckCircle2, AlertTriangle, XCircle, 
   BarChart3, Scale, ShieldCheck, ShieldAlert, Award, Calculator, 
   Printer, Image as ImageIcon, CheckSquare, BookOpen, RefreshCw,
-  Eye, AlertOctagon, HelpCircle, ExternalLink, Sparkles
+  Eye, AlertOctagon, HelpCircle, ExternalLink, Sparkles, Barcode as BarcodeIcon
 } from 'lucide-react';
 import { AuditReport } from '../../types/compliance';
 import { calculateProductGrade, calculateDomainScores, getPlainEnglishSummary } from '../../utils/grading';
 import { CanvasViewer } from '../inspection/CanvasViewer';
 import { OCRRawTextViewer } from './OCRRawTextViewer';
+import { BarcodeSymbolsCard } from './BarcodeSymbolsCard';
 
 interface FullPageReportProps {
   report: AuditReport | null;
@@ -32,7 +33,7 @@ export const FullPageReport: React.FC<FullPageReportProps> = ({
 }) => {
   const [activeBoxId, setActiveBoxId] = useState<string | null>(null);
   const [selectedMandateId, setSelectedMandateId] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'overview' | 'mandates' | 'canvas' | 'gazette'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'barcodes' | 'canvas' | 'gazette'>('overview');
   const [filter, setFilter] = useState<'ALL' | 'VIOLATION' | 'WARNING' | 'COMPLIANT'>('ALL');
   const [hoveredSlice, setHoveredSlice] = useState<string | null>(null);
   const [expandedCitationId, setExpandedCitationId] = useState<string | null>(null);
@@ -549,6 +550,21 @@ export const FullPageReport: React.FC<FullPageReportProps> = ({
           </button>
 
           <button
+            onClick={() => setActiveTab('barcodes')}
+            className={`px-4 py-2.5 rounded-2xl flex items-center gap-2 transition-all shrink-0 ${
+              activeTab === 'barcodes'
+                ? 'bg-zinc-900 text-white shadow-sm'
+                : 'bg-white text-zinc-700 hover:bg-zinc-100 border border-zinc-200'
+            }`}
+          >
+            <BarcodeIcon className="w-3.5 h-3.5" />
+            <span>Barcode, QR &amp; Symbols</span>
+            {report.barcode_data?.detected && (
+              <span className="w-2 h-2 rounded-full bg-emerald-500" />
+            )}
+          </button>
+
+          <button
             onClick={() => setActiveTab('canvas')}
             className={`px-4 py-2.5 rounded-2xl flex items-center gap-2 transition-all shrink-0 ${
               activeTab === 'canvas'
@@ -744,7 +760,16 @@ export const FullPageReport: React.FC<FullPageReportProps> = ({
           </section>
         )}
 
-        {/* TAB B: Packaging Spatial Canvas & OCR */}
+        {/* TAB B: Barcode, QR & Statutory Packaging Symbols */}
+        {activeTab === 'barcodes' && (
+          <BarcodeSymbolsCard
+            barcode={report.barcode_data || report.label_data?.barcode_data}
+            qr={report.qr_data || report.label_data?.qr_data}
+            symbols={report.packaging_symbols || report.label_data?.packaging_symbols}
+          />
+        )}
+
+        {/* TAB C: Packaging Spatial Canvas & OCR */}
         {activeTab === 'canvas' && (
           <section className="space-y-6">
             <div className="bg-white rounded-[32px] p-6 sm:p-8 border border-zinc-200/90 shadow-sm space-y-4">
