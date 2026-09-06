@@ -22,6 +22,9 @@ import { GovtTrustBanner } from './components/common/GovtEmblems';
 import { GovernmentGazetteView } from './components/nutriscan/GovernmentGazetteView';
 import { ErrorBoundary } from './components/common/ErrorBoundary';
 import { NoticeModal } from './components/export/NoticeModal';
+import { ComplaintPortal } from './components/complaints/ComplaintPortal';
+import { ComplaintTracker } from './components/complaints/ComplaintTracker';
+import { GovDashboard } from './components/complaints/GovDashboard';
 import { FairPackAPI } from './services/api';
 import { AuditReport } from './types/compliance';
 
@@ -32,6 +35,9 @@ export function App() {
   const [isUploadModalOpen, setIsUploadModalOpen] = useState<boolean>(false);
   const [isDrawerOpen, setIsDrawerOpen] = useState<boolean>(false);
   const [isNoticeOpen, setIsNoticeOpen] = useState<boolean>(false);
+  const [isComplaintOpen, setIsComplaintOpen] = useState<boolean>(false);
+  const [isTrackerOpen, setIsTrackerOpen] = useState<boolean>(false);
+  const [isGovDashboardOpen, setIsGovDashboardOpen] = useState<boolean>(false);
   const [isMobileFrameMode, setIsMobileFrameMode] = useState<boolean>(false);
   const [recentItems, setRecentItems] = useState<ScannedItem[]>(RECENT_ITEMS);
 
@@ -138,6 +144,9 @@ export function App() {
           onScanClick={() => setIsScannerOpen(true)}
           onUploadClick={() => setIsUploadModalOpen(true)}
           onOpenNotice={() => setIsNoticeOpen(true)}
+          onOpenComplaint={() => setIsComplaintOpen(true)}
+          onOpenTracker={() => setIsTrackerOpen(true)}
+          onOpenGovPortal={() => setIsGovDashboardOpen(true)}
           isMobileFrameMode={isMobileFrameMode}
           onToggleFrameMode={() => setIsMobileFrameMode(!isMobileFrameMode)}
         />
@@ -183,6 +192,9 @@ export function App() {
                   onScanClick={() => setIsScannerOpen(true)}
                   onUploadClick={() => setIsUploadModalOpen(true)}
                   onRecentScansClick={() => setIsDrawerOpen(true)}
+                  onOpenComplaint={() => setIsComplaintOpen(true)}
+                  onOpenTracker={() => setIsTrackerOpen(true)}
+                  onOpenGovPortal={() => setIsGovDashboardOpen(true)}
                 />
 
                 {/* Two-Column Inspection & Product Tray Section */}
@@ -220,6 +232,9 @@ export function App() {
                   onScanClick={() => setIsScannerOpen(true)}
                   onUploadClick={() => setIsUploadModalOpen(true)}
                   onRecentScansClick={() => setIsDrawerOpen(true)}
+                  onOpenComplaint={() => setIsComplaintOpen(true)}
+                  onOpenTracker={() => setIsTrackerOpen(true)}
+                  onOpenGovPortal={() => setIsGovDashboardOpen(true)}
                 />
                 <TodaySnapshot
                   report={report}
@@ -307,6 +322,7 @@ export function App() {
             report={report}
             onClose={() => setIsDrawerOpen(false)}
             onOpenNotice={() => setIsNoticeOpen(true)}
+            onOpenComplaint={() => setIsComplaintOpen(true)}
             onRescan={() => {
               setIsDrawerOpen(false);
               setIsScannerOpen(true);
@@ -321,6 +337,23 @@ export function App() {
         onClose={() => setIsNoticeOpen(false)}
         report={report}
       />
+
+      {/* Consumer Grievance / Complaint Portal */}
+      <ComplaintPortal
+        isOpen={isComplaintOpen}
+        onClose={() => setIsComplaintOpen(false)}
+        report={report}
+      />
+
+      {/* Complaint Status Tracker */}
+      {isTrackerOpen && (
+        <ComplaintTracker onClose={() => setIsTrackerOpen(false)} />
+      )}
+
+      {/* Government Officer Dashboard */}
+      {isGovDashboardOpen && (
+        <GovDashboard onClose={() => setIsGovDashboardOpen(false)} />
+      )}
     </div>
   );
 }

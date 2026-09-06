@@ -4,7 +4,7 @@ import {
   BarChart3, Scale, ShieldCheck, ShieldAlert, Award, Calculator, 
   Printer, Image as ImageIcon, CheckSquare, BookOpen, RefreshCw,
   Eye, AlertOctagon, HelpCircle, ExternalLink, Sparkles, Barcode as BarcodeIcon,
-  Shield, AlertCircle, ChevronDown, ChevronUp, Copy, Check
+  Shield, AlertCircle, ChevronDown, ChevronUp, Copy, Check, Flag
 } from 'lucide-react';
 import { AuditReport } from '../../types/compliance';
 import { calculateProductGrade, calculateDomainScores, getPlainEnglishSummary } from '../../utils/grading';
@@ -16,6 +16,7 @@ interface FullPageReportProps {
   report: AuditReport | null;
   onClose: () => void;
   onOpenNotice: () => void;
+  onOpenComplaint?: () => void;
   onRescan?: () => void;
 }
 
@@ -30,6 +31,7 @@ export const FullPageReport: React.FC<FullPageReportProps> = ({
   report,
   onClose,
   onOpenNotice,
+  onOpenComplaint,
   onRescan,
 }) => {
   const [activeBoxId, setActiveBoxId] = useState<string | null>(null);
@@ -938,6 +940,15 @@ export const FullPageReport: React.FC<FullPageReportProps> = ({
           </button>
 
           <div className="flex items-center gap-3">
+            {onOpenComplaint && (
+              <button
+                onClick={onOpenComplaint}
+                className="px-5 py-2.5 rounded-xl font-black text-xs flex items-center gap-2 shadow-lg transition-all active:scale-95 bg-[#FF2A85] hover:bg-[#e0246f] text-white shadow-[#FF2A85]/20"
+              >
+                <Flag className="w-4 h-4" />
+                <span>File Govt Complaint</span>
+              </button>
+            )}
             <button
               onClick={onOpenNotice}
               className={`px-6 py-2.5 rounded-xl font-black text-xs flex items-center gap-2 shadow-lg transition-all active:scale-95 ${

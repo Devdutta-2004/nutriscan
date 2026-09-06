@@ -1,14 +1,17 @@
 import React, { useState } from 'react';
-import { Leaf, Camera, Image as ImageIcon, Sparkles, Smartphone, Monitor, Menu, X, FileText, ChevronRight } from 'lucide-react';
+import { Leaf, Camera, Image as ImageIcon, Sparkles, Smartphone, Monitor, Menu, X, FileText, ChevronRight, Flag, Search, Shield } from 'lucide-react';
 import { JagoGrahakJagoLogo, NationalConsumerHelplineBadge } from '../common/GovtEmblems';
 
 interface NutriHeaderProps {
   activeTab: string;
   onSelectTab: (tab: string) => void;
-  onProfileClick?: () => void;
+  onProfileClick: () => void;
   onScanClick?: () => void;
   onUploadClick?: () => void;
   onOpenNotice?: () => void;
+  onOpenComplaint?: () => void;
+  onOpenTracker?: () => void;
+  onOpenGovPortal?: () => void;
   isMobileFrameMode: boolean;
   onToggleFrameMode: () => void;
 }
@@ -20,6 +23,9 @@ export const NutriHeader: React.FC<NutriHeaderProps> = ({
   onScanClick,
   onUploadClick,
   onOpenNotice,
+  onOpenComplaint,
+  onOpenTracker,
+  onOpenGovPortal,
   isMobileFrameMode,
   onToggleFrameMode,
 }) => {
@@ -83,6 +89,30 @@ export const NutriHeader: React.FC<NutriHeaderProps> = ({
 
         {/* Right Actions */}
         <div className="flex items-center gap-1.5 sm:gap-3">
+          {/* Consumer Grievance Tracker */}
+          {onOpenTracker && (
+            <button
+              onClick={onOpenTracker}
+              title="Track Complaint Status"
+              className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-50 hover:bg-amber-100 border border-amber-200/80 text-xs font-bold text-amber-900 shadow-xs transition-all active:scale-95"
+            >
+              <Search className="w-3.5 h-3.5 text-amber-700" />
+              <span>Track Complaint</span>
+            </button>
+          )}
+
+          {/* Government Officer Dashboard */}
+          {onOpenGovPortal && (
+            <button
+              onClick={onOpenGovPortal}
+              title="Government Officer Dashboard"
+              className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-indigo-50 hover:bg-indigo-100 border border-indigo-200/80 text-xs font-bold text-indigo-900 shadow-xs transition-all active:scale-95"
+            >
+              <Shield className="w-3.5 h-3.5 text-indigo-700" />
+              <span>Gov Portal</span>
+            </button>
+          )}
+
           {/* Device Viewport Preview Toggle on larger screens */}
           <button
             onClick={onToggleFrameMode}
@@ -225,6 +255,32 @@ export const NutriHeader: React.FC<NutriHeaderProps> = ({
                   <span>Rule 32 Non-Compliance Order</span>
                 </div>
                 <ChevronRight className="w-3.5 h-3.5 text-rose-400" />
+              </button>
+            )}
+
+            {onOpenTracker && (
+              <button
+                onClick={() => handleMobileAction(onOpenTracker)}
+                className="w-full flex items-center justify-between p-2 rounded-xl bg-amber-50/70 hover:bg-amber-100/70 transition-colors text-left text-amber-900 font-bold text-xs"
+              >
+                <div className="flex items-center gap-2.5">
+                  <Search className="w-3.5 h-3.5 text-amber-600" />
+                  <span>Track Complaint Status</span>
+                </div>
+                <ChevronRight className="w-3.5 h-3.5 text-amber-400" />
+              </button>
+            )}
+
+            {onOpenGovPortal && (
+              <button
+                onClick={() => handleMobileAction(onOpenGovPortal)}
+                className="w-full flex items-center justify-between p-2 rounded-xl bg-indigo-50/70 hover:bg-indigo-100/70 transition-colors text-left text-indigo-900 font-bold text-xs"
+              >
+                <div className="flex items-center gap-2.5">
+                  <Shield className="w-3.5 h-3.5 text-indigo-600" />
+                  <span>Legal Metrology Officer Portal</span>
+                </div>
+                <ChevronRight className="w-3.5 h-3.5 text-indigo-400" />
               </button>
             )}
           </div>

@@ -1,16 +1,22 @@
 import React from 'react';
-import { Camera, Image as ImageIcon, History } from 'lucide-react';
+import { Camera, Image as ImageIcon, History, Flag, Search, Shield } from 'lucide-react';
 
 interface ActionButtonsProps {
   onScanClick: () => void;
   onUploadClick: () => void;
   onRecentScansClick: () => void;
+  onOpenComplaint?: () => void;
+  onOpenTracker?: () => void;
+  onOpenGovPortal?: () => void;
 }
 
 export const ActionButtons: React.FC<ActionButtonsProps> = ({
   onScanClick,
   onUploadClick,
   onRecentScansClick,
+  onOpenComplaint,
+  onOpenTracker,
+  onOpenGovPortal,
 }) => {
   return (
     <div className="pt-3 space-y-2.5">
@@ -48,6 +54,39 @@ export const ActionButtons: React.FC<ActionButtonsProps> = ({
           </div>
           <span>Recent Scans</span>
         </button>
+      </div>
+
+      {/* Tertiary: Consumer Grievance & Government Enforcement Portal */}
+      <div className="grid grid-cols-3 gap-2 pt-0.5">
+        {onOpenComplaint && (
+          <button
+            onClick={onOpenComplaint}
+            className="bg-rose-50/80 hover:bg-rose-100/80 border border-rose-200/80 rounded-2xl py-2.5 px-2 shadow-xs flex flex-col items-center justify-center gap-1 font-black text-[11px] text-rose-700 transition-all active:scale-[0.97]"
+          >
+            <Flag className="w-3.5 h-3.5 text-rose-600" />
+            <span>File Complaint</span>
+          </button>
+        )}
+
+        {onOpenTracker && (
+          <button
+            onClick={onOpenTracker}
+            className="bg-amber-50/80 hover:bg-amber-100/80 border border-amber-200/80 rounded-2xl py-2.5 px-2 shadow-xs flex flex-col items-center justify-center gap-1 font-black text-[11px] text-amber-800 transition-all active:scale-[0.97]"
+          >
+            <Search className="w-3.5 h-3.5 text-amber-600" />
+            <span>Track Status</span>
+          </button>
+        )}
+
+        {onOpenGovPortal && (
+          <button
+            onClick={onOpenGovPortal}
+            className="bg-indigo-50/80 hover:bg-indigo-100/80 border border-indigo-200/80 rounded-2xl py-2.5 px-2 shadow-xs flex flex-col items-center justify-center gap-1 font-black text-[11px] text-indigo-700 transition-all active:scale-[0.97]"
+          >
+            <Shield className="w-3.5 h-3.5 text-indigo-600" />
+            <span>Gov Officer</span>
+          </button>
+        )}
       </div>
     </div>
   );

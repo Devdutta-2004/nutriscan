@@ -8,6 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.api.audit import router as audit_router
 from app.api.compliance import router as compliance_router
 from app.api.gazette import router as gazette_router
+from app.api.complaints import router as complaints_router
 
 app = FastAPI(
     title="FairPack API",
@@ -28,6 +29,7 @@ app.add_middleware(
 app.include_router(audit_router, prefix="/api")
 app.include_router(compliance_router, prefix="/api")
 app.include_router(gazette_router, prefix="/api")
+app.include_router(complaints_router, prefix="/api")
 
 from app.rag.lmpc_corpus import LMPC_CORPUS, CORPUS_VERSION
 
