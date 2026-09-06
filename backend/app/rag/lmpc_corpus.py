@@ -341,19 +341,19 @@ LMPC_CORPUS: List[Dict[str, Any]] = [
     },
     {
         "id": "rule_26_a",
-        "title": "Rule 26(a) - Small Packages Exemption",
+        "title": "Rule 26(a) - Small Packages Exemption & Pan Masala / Tobacco Exclusions",
         "act_rule": "The Legal Metrology (Packaged Commodities) Rules, 2011",
         "gazette_ref": "G.S.R. 202(E)",
         "effective_date": "2011-04-01",
-        "amendment_refs": ["G.S.R. 427(E)"],
-        "verbatim_text": "26. Exemption in respect of certain packages.- Nothing contained in these rules shall apply to any package containing a commodity if- (a) the net weight or measure of the commodity is ten gram or ten millilitre or less, if sold by weight or measure; Provided that the declaration in respect of maximum retail price and net quantity shall be declared on packages containing 10g to 20g or 10ml to 20ml; Provided further that this exemption shall not apply to tobacco and tobacco products.",
-        "officer_guidance": "Packages <= 10g or 10ml are exempt from most rules, EXCEPT tobacco and pan masala which need all declarations regardless of size.",
-        "penalty_rule": "None",
+        "amendment_refs": ["G.S.R. 427(E)", "G.S.R. 881(E)"],
+        "verbatim_text": "26. Exemption in respect of certain packages.- Nothing contained in these rules shall apply to any package containing a commodity if- (a) the net weight or measure of the commodity is ten gram or ten millilitre or less, if sold by weight or measure: Provided that the declaration in respect of maximum retail price and net quantity shall be declared on packages containing 10g to 20g or 10ml to 20ml: Provided further that this exemption shall not apply to tobacco and tobacco products: Provided further that the provisions of this clause shall not apply to pan masala [inserted vide G.S.R. 881(E) dated 2nd December, 2025, effective 1st February, 2026].",
+        "officer_guidance": "Packages <= 10g or 10ml are exempt from most rules, EXCEPT tobacco products and pan masala which must carry all mandatory declarations (MRP, Net Quantity, Manufacturer details, Mfg Date) regardless of package size or weight.",
+        "penalty_rule": "section_36_1",
         "category": "exemption",
-        "applies_to": ["small packages"],
-        "tags": ["exemption", "10g", "10ml", "small", "tobacco"],
+        "applies_to": ["small packages", "tobacco", "pan_masala"],
+        "tags": ["exemption", "10g", "10ml", "small", "tobacco", "pan masala", "gsr 881(e)"],
         "parent_rule": None,
-        "related_rules": []
+        "related_rules": ["rule_26_a_pan_masala_exception", "rule_6_1_c", "rule_6_1_d"]
     },
     {
         "id": "rule_26_b_f",
@@ -677,19 +677,19 @@ LMPC_CORPUS: List[Dict[str, Any]] = [
     },
     {
         "id": "rule_26_a_pan_masala_exception",
-        "title": "Rule 26(a) Proviso - Pan Masala Excluded from Small Pack Exemption",
+        "title": "Rule 26(a) Second Proviso - Pan Masala Excluded from Small Pack Exemption (G.S.R. 881(E))",
         "act_rule": "The Legal Metrology (Packaged Commodities) Second (Amendment) Rules, 2025",
-        "gazette_ref": "G.S.R. 881(E)",
+        "gazette_ref": "G.S.R. 881(E) [Gazette No. 795, CG-DL-E-02122025-268164]",
         "effective_date": "2026-02-01",
-        "amendment_refs": ["G.S.R. 881(E)"],
-        "verbatim_text": "In rule 26 clause (a), after the first proviso: 'Provided further that the provisions of this clause shall not apply to pan masala.'",
-        "officer_guidance": "Pan masala packages of 10g or less are NOT exempt under Rule 26(a). All mandatory declarations (MRP, Net Qty, Mfg Date, Address) apply regardless of how small the pouch is.",
+        "amendment_refs": ["G.S.R. 881(E)", "G.S.R. 202(E)", "G.S.R. 778(E)"],
+        "verbatim_text": "In the Legal Metrology (Packaged Commodities) Rules, 2011, in rule 26 in clause (a), after the first proviso, the following proviso shall be inserted, namely:- 'Provided further that the provisions of this clause shall not apply to pan masala.' (Hindi: विधिक मापविज्ञान (पैकेज में रखी वस्तुएं) नियम, 2011 के नियम 26 के, खंड (क) में, पहले परंतुक के पश्चात, निम्नलिखित परंतुक अंत: स्थापित किया जाएगा, अर्थात्: - 'परंतु यह और कि इस खंड के उपबंध पान मसाला पर लागू नहीं होंगे;'।) [Notification F. No. I-10/4/2025-W&M, Ministry of Consumer Affairs, Food and Public Distribution, New Delhi, dated 2nd December, 2025, published in Gazette of India Extraordinary, Part II-Sec. 3(i), No. 795].",
+        "officer_guidance": "Pan masala packages of 10g or less are NOT exempt under Rule 26(a). Regardless of whether a pouch contains 1g, 2g, 4g, or 10g, all mandatory declarations under Rule 6—specifically MRP inclusive of all taxes, net quantity in metric SI units, date of manufacture/packing, and complete name and address of manufacturer/packer with PIN code—apply strictly. Non-compliant pan masala sachets are subject to prosecution and seizure under Section 36(1).",
         "penalty_rule": "section_36_1",
-        "category": "exemption",
-        "applies_to": ["food", "tobacco", "pan_masala"],
-        "tags": ["pan masala", "small pack", "exemption withdrawal", "rule 26(a)", "gsr 881(e)"],
+        "category": "amendment",
+        "applies_to": ["food", "pan_masala", "small packages"],
+        "tags": ["pan masala", "small pack", "exemption withdrawal", "rule 26(a)", "gsr 881(e)", "sachets", "second amendment 2025"],
         "parent_rule": "rule_26_a",
-        "related_rules": ["rule_26_a", "rule_6_1_c", "rule_6_1_d"]
+        "related_rules": ["rule_26_a", "rule_6_1_a", "rule_6_1_c", "rule_6_1_d", "section_36_1"]
     },
     {
         "id": "edible_oil_sop_net_quantity",
@@ -722,6 +722,38 @@ LMPC_CORPUS: List[Dict[str, Any]] = [
         "tags": ["qr code", "digital disclosure", "gsr 456(e)", "electronics"],
         "parent_rule": "gsr_524_e_qr",
         "related_rules": ["gsr_524_e_qr", "rule_6_10"]
+    },
+    {
+        "id": "so_210_e_act_commencement",
+        "title": "S.O. 210(E) - Enforcement and Commencement of Legal Metrology Act, 2009",
+        "act_rule": "The Legal Metrology Act, 2009 (1 of 2010)",
+        "gazette_ref": "S.O. 210(E) [Gazette No. 170, Part II-Sec. 3(ii)]",
+        "effective_date": "2011-04-01",
+        "amendment_refs": ["S.O. 1(E)"],
+        "verbatim_text": "In exercise of the powers conferred by sub-section (3) of Section 1 of the Legal Metrology Act, 2009 (1 of 2010), the Central Government hereby rescinds the notification of the Government of India in the Ministry of Consumer Affairs, Food and Public Distribution, Department of Consumer Affairs, number S.O. 1(E), dated the 31st December, 2010, published in the Gazette of India, Part II, Section 3, sub-section (ii), dated the 1st January, 2011, and hereby appoints the 1st day of April, 2011 as the date on which the said Act, shall come into force. [F. No. WM-9(6)/2010-Pt., Rakesh Kacker, Addl. Secy.] (Hindi: का.आ. 210(अ).—केन्द्रीय सरकार, विधिक माप विज्ञान अधिनियम, 2009 (2010 का 1) की धारा 1 की उप-धारा (3) द्वारा प्रदत्त शक्तियों का प्रयोग करते हुए 1 अप्रैल, 2011 को उस तारीख के रूप में नियुक्त करती है जिसको उक्त अधिनियम प्रवृत्त होगा।)",
+        "officer_guidance": "Establishes 1st April 2011 as the official nationwide enforcement commencement date for all provisions of the Legal Metrology Act, 2009 and the Legal Metrology (Packaged Commodities) Rules, 2011.",
+        "penalty_rule": "None",
+        "category": "act",
+        "applies_to": ["all"],
+        "tags": ["commencement", "enforcement date", "so 210(e)", "so 1(e)", "1 april 2011", "legal metrology act 2009"],
+        "parent_rule": None,
+        "related_rules": ["section_36_1", "section_36_2", "rule_32"]
+    },
+    {
+        "id": "corrigenda_act_1_of_2010",
+        "title": "Corrigenda to Legal Metrology Act, 2009 (Act No. 1 of 2010)",
+        "act_rule": "The Legal Metrology Act, 2009 (1 of 2010)",
+        "gazette_ref": "Gazette No. 46 (22 Sept 2010) & No. 54 (13 Dec 2010)",
+        "effective_date": "2010-12-13",
+        "amendment_refs": [],
+        "verbatim_text": "In the Legal Metrology Act, 2009 (No. 1 of 2010), as published in the Gazette of India, Extraordinary, Part II, Section 1, dated the 14th January, 2010 (Issue No. 1): (i) at page 9, line 9, for '52', read '53'; (ii) at page 12, line 19, for '52', read '53'; and (iii) at page 14, line 13, for '52', read '53'. [Ministry of Law and Justice, Legislative Department, V.K. Bhasin, Secy.]",
+        "officer_guidance": "Statutory corrigenda correcting rule-making power and repeals cross-references between Section 52 (Central Government rule-making powers) and Section 53 (State Government rule-making powers).",
+        "penalty_rule": "None",
+        "category": "act",
+        "applies_to": ["all"],
+        "tags": ["corrigendum", "section 52", "section 53", "legal metrology act", "gazette corrigenda"],
+        "parent_rule": None,
+        "related_rules": []
     }
 ]
 
